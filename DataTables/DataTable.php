@@ -151,7 +151,7 @@ class DataTable
      */
     public function getParameters()
     {
-        $this->parameters;
+        return $this->parameters;
     }
 
     /**
