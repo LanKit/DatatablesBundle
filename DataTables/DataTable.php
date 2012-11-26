@@ -22,7 +22,7 @@
  * built off of, see: https://gist.github.com/1638094 
  */
 
-namespace LanKit\DataTablesBundle\DataTables;
+namespace LanKit\DatatablesBundle\Datatables;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -33,7 +33,7 @@ use Doctrine\ORM\EntityRepository;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Config\Definition\Exception\Exception;
 
-class DataTable
+class Datatable
 {
     /**
      * Doctrine innerJoin type

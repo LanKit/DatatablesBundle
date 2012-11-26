@@ -1,14 +1,14 @@
 <?php
 
-namespace LanKit\DataTablesBundle;
+namespace LanKit\DatatablesBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
-use LanKit\DataTablesBundle\DependencyInjection\LanKitDataTablesExtension;
+use LanKit\DatatablesBundle\DependencyInjection\LanKitDatatablesExtension;
 
-class LanKitDataTablesBundle extends Bundle
+class LanKitDatatablesBundle extends Bundle
 {
     public function getContainerExtension()
     {
-        return new LanKitDataTablesExtension();
+        return new LanKitDatatablesExtension();
     }
 }
