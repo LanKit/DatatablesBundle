@@ -1,11 +1,11 @@
 <?php
 
-namespace LanKit\DataTableBundle\DataTables;
+namespace LanKit\DatatablesBundle\Datatables;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Bundle\DoctrineBundle\Registry
+use Doctrine\Bundle\DoctrineBundle\Registry as DoctrineRegistry;
 
-class DataTableManager
+class DatatableManager
 {
     /**
      * @var object The Doctrine service
@@ -17,7 +17,7 @@ class DataTableManager
      */
     protected $container;
 
-    public function __construct(Registry $doctrine, ContainerInterface $container)
+    public function __construct(DoctrineRegistry $doctrine, ContainerInterface $container)
     {
         $this->doctrine = $doctrine;
         $this->container = $container;
@@ -32,7 +32,8 @@ class DataTableManager
     protected function getClassName($className) {
         if (strpos($className, ':') !== false) {
            list($namespaceAlias, $simpleClassName) = explode(':', $className);
-           $className = $this->om->getConfiguration()->getEntityNamespace($namespaceAlias) . '\\' . $simpleClassName;
+           $className = $this->doctrine->getEntityManager()->getConfiguration()
+               ->getEntityNamespace($namespaceAlias) . '\\' . $simpleClassName;
         }
         return $className;
     }
