@@ -506,7 +506,7 @@ class Datatable
         $outputHeader = array(
             "sEcho" => (int) $this->echo,
             "iTotalRecords" => $this->getCountAllResults(),
-            "iTotalDisplayRecords" => (string) $this->getCountFilteredResults()
+            "iTotalDisplayRecords" => $this->getCountFilteredResults()
         );
 
         return array_merge($outputHeader, $output);
