@@ -126,6 +126,11 @@ class Datatable
     protected $identifiers = array();
 
     /**
+     * @var string The primary/unique ID for the root entity
+     */
+    protected $rootEntityIdentifier;
+
+    /**
      * @var integer The total amount of results to get from the database
      */
     protected $limit;
@@ -144,6 +149,9 @@ class Datatable
         $this->search = $this->request['sSearch'];
         $this->offset = $this->request['iDisplayStart'];
         $this->amount = $this->request['iDisplayLength'];
+
+        $identifiers = $this->metadata->getIdentifierFieldNames();
+        $this->rootEntityIdentifier = array_shift($identifiers);
     }
 
     /**
@@ -421,9 +429,8 @@ class Datatable
         }
 
         // Make sure to include the identifier for the main entity
-        $identifiers = $this->metadata->getIdentifierFieldNames();
-        if (!in_array($identifiers[0], $columns[$this->tableName])) {
-            array_unshift($columns[$this->tableName], $identifiers[0]);
+        if (!in_array($this->rootEntityIdentifier, $columns[$this->tableName])) {
+            array_unshift($columns[$this->tableName], $this->rootEntityIdentifier);
         }
 
         foreach ($columns as $columnName => $fields) {
@@ -511,7 +518,9 @@ class Datatable
     public function getCountAllResults()
     {
         return (int) $this->repository->createQueryBuilder($this->tableName)
-            ->select('count(' . $this->tableName . '.id)')->getQuery()->getSingleScalarResult();
+            ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')')
+            ->getQuery()
+            ->getSingleScalarResult();
     }
     
     /**
@@ -520,7 +529,7 @@ class Datatable
     public function getCountFilteredResults()
     {
         $qb = $this->repository->createQueryBuilder($this->tableName);
-        $qb->select('count(' . $this->tableName . '.id)');
+        $qb->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
         $this->setAssociations($qb);
         $this->setWhere($qb);
         return (int) $qb->getQuery()->getSingleScalarResult();
