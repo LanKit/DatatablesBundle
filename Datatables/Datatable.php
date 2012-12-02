@@ -323,23 +323,27 @@ class Datatable
 
     /**
      * Set the scope of the result set
+     *
+     * @param QueryBuilder The Doctrine QueryBuilder object
      */
-    public function setLimit()
+    public function setLimit(QueryBuilder $qb)
     {
         if (isset($this->offset) && $this->amount != '-1') {
-            $this->qb->setFirstResult($this->offset)->setMaxResults($this->amount);
+            $qb->setFirstResult($this->offset)->setMaxResults($this->amount);
         }
     }
 
     /**
      * Set any column ordering that has been requested
+     *
+     * @param QueryBuilder The Doctrine QueryBuilder object
      */
-    public function setOrderBy()
+    public function setOrderBy(QueryBuilder $qb)
     {
         if (isset($this->request['iSortCol_0'])) {
             for ($i = 0; $i < intval($this->request['iSortingCols']); $i++) {
                 if ($this->request['bSortable_'.intval($this->request['iSortCol_'. $i])] == "true") {
-                    $this->qb->addOrderBy(
+                    $qb->addOrderBy(
                         $this->associations[$this->request['iSortCol_'.$i]]['fullName'],
                         $this->request['sSortDir_'.$i]
                     );
@@ -450,8 +454,8 @@ class Datatable
         $this->setSelect($this->qb);
         $this->setAssociations($this->qb);
         $this->setWhere($this->qb);
-        $this->setOrderBy();
-        $this->setLimit();
+        $this->setOrderBy($this->qb);
+        $this->setLimit($this->qb);
     }
 
     /**
