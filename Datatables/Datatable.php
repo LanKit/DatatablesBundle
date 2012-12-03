@@ -32,6 +32,7 @@ use Doctrine\ORM\EntityRepository;
 
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpFoundation\Response;
 
 class Datatable
 {
@@ -44,6 +45,21 @@ class Datatable
      * Doctrine leftJoin type
      */
     const JOIN_LEFT = 'left';
+
+    /**
+     * A result type of array
+     */
+    const RESULT_ARRAY = 'Array';
+
+    /**
+     * A result type of JSON
+     */
+    const RESULT_JSON = 'Json';
+
+    /**
+     * A result type of a Response object
+     */
+    const RESULT_RESPONSE = 'Response';
 
     /**
      * @var string The default join type to use
@@ -135,6 +151,11 @@ class Datatable
      */
     protected $limit;
 
+    /**
+     * @var array The formatted data from the search results to return to DataTables.js
+     */
+    protected $datatable;
+
     public function __construct(array $request, EntityRepository $repository, ClassMetadata $metadata, EntityManager $em)
     {
         $this->em = $em;
@@ -143,6 +164,7 @@ class Datatable
         $this->metadata = $metadata;
         $this->tableName = Container::camelize($metadata->getTableName());
         $this->defaultJoinType = self::JOIN_INNER;
+        $this->defaultResultType = self::RESULT_RESPONSE;
         $this->setParameters();
         $this->qb = $em->createQueryBuilder();
         $this->echo = $this->request['sEcho'];
@@ -470,12 +492,9 @@ class Datatable
     }
 
     /**
-     * Execute the QueryBuilder object, parse the results, and send back the
-     * DataTable data
-     *
-     * @return array Data results for DataTables.js
+     * Execute the QueryBuilder object, parse and save the results
      */
-    public function getSearchResults()
+    public function executeSearch()
     {
         $this->fresults = $this->qb->getQuery()->getResult(Query::HYDRATE_ARRAY);
         $output = array("aaData" => array());
@@ -513,7 +532,69 @@ class Datatable
             "iTotalDisplayRecords" => $this->getCountFilteredResults()
         );
 
-        return array_merge($outputHeader, $output);
+        $this->datatable = array_merge($outputHeader, $output);
+    }
+
+    /**
+     * Set the default result type to use when calling getSearchResults
+     *
+     * @param string The result type to use, should be one of: RESULT_JSON, RESULT_ARRAY, RESULT_RESPONSE
+     */
+    public function setDefaultResultType($resultType)
+    {
+        if (defined('self::RESULT_' . strtoupper($resultType))) {
+            $this->defaultResultType = constant('self::RESULT_' . strtoupper($resultType));
+        }
+    }
+
+    /**
+     * Creates and executes the DataTables search, returns data in the requested format
+     *
+     * @param string The result type to use, should be one of: RESULT_JSON, RESULT_ARRAY, RESULT_RESPONSE
+     * @return mixed The DataTables data in the requested/default format
+     */
+    public function getSearchResults($resultType = '')
+    {
+        if (empty($resultType) || !defined('self::RESULT_' . strtoupper($resultType))) {
+            $resultType = $this->defaultResultType;
+        }
+        else {
+            $resultType = constant('self::RESULT_' . strtoupper($resultType));
+        }
+
+        $this->makeSearch();
+        $this->executeSearch();
+
+        return call_user_func(array(
+            $this, 'getSearchResults' . $resultType
+        ));
+    }
+
+    /**
+     * @return string The DataTables search result as JSON
+     */
+    public function getSearchResultsJson()
+    {
+        return json_encode($this->datatable);
+    }
+
+    /**
+     * @return array The DataTables search result as an array
+     */
+    public function getSearchResultsArray()
+    {
+        return $this->datatable;
+    }
+
+    /**
+     * @return object The DataTables search result as a Response object
+     */
+    public function getSearchResultsResponse()
+    {
+        $response = new Response(json_encode($this->datatable));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
     }
 
     /**
