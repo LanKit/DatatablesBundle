@@ -42,7 +42,7 @@ class DatatableManager
      * @param string An entity class name or alias 
      * @return object Get a DataTable instance for the given entity
      */
-    public function getDataTable($class)
+    public function getDatatable($class)
     {
         $class = $this->getClassName($class);
 
