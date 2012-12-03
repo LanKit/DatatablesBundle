@@ -2,7 +2,7 @@ LanKitDatatablesBundle
 ======================
 
 This bundle provides server-side processing for DataTables.js when using Doctrine Entities.
-It works by parsing mData sent from DataTables.js and returning the the corresponding data.
+It works by parsing mData sent from DataTables.js and returning the corresponding data.
 
 Documentation
 -------------
