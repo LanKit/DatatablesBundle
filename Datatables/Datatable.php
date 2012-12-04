@@ -328,6 +328,8 @@ class Datatable
         if (defined('self::JOIN_' . strtoupper($joinType))) {
             $this->defaultJoinType = constant('self::JOIN_' . strtoupper($joinType));
         }
+
+        return $this;
     }
 
     /**
@@ -341,6 +343,8 @@ class Datatable
         if (defined('self::JOIN_' . strtoupper($joinType))) {
             $this->joinTypes[$column] = constant('self::JOIN_' . strtoupper($joinType));
         }
+
+        return $this;
     }
 
     /**
@@ -478,6 +482,8 @@ class Datatable
         $this->setWhere($this->qb);
         $this->setOrderBy($this->qb);
         $this->setLimit($this->qb);
+
+        return $this;
     }
 
     /**
@@ -533,6 +539,8 @@ class Datatable
         );
 
         $this->datatable = array_merge($outputHeader, $output);
+
+        return $this;
     }
 
     /**
@@ -545,6 +553,8 @@ class Datatable
         if (defined('self::RESULT_' . strtoupper($resultType))) {
             $this->defaultResultType = constant('self::RESULT_' . strtoupper($resultType));
         }
+
+        return $this;
     }
 
     /**
