@@ -49,7 +49,7 @@ class DatatableManager
         $metadata = $this->doctrine->getEntityManager()->getClassMetadata($class);
         $repository = $this->doctrine->getRepository($class);
 
-        return new DataTable(
+        return new Datatable(
             $this->container->get('request')->query->all(),
             $this->doctrine->getRepository($class),
             $this->doctrine->getEntityManager()->getClassMetadata($class),
