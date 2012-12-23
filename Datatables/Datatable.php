@@ -445,6 +445,12 @@ class Datatable
         $columns = array();
         $partials = array();
 
+        // Make sure all related joins are added as needed columns. A column many entities deep may rely on a
+        // column not specifically requested in the mData
+        foreach (array_keys($this->assignedJoins) as $joinName) {
+            $columns[$joinName] = array();
+        }
+
         // Combine all columns to pull
         foreach ($this->associations as $column) {
             $parts = explode('.', $column['fullName']);
