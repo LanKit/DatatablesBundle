@@ -16,6 +16,9 @@
         "doctrine/orm": ">=2.2.3,<2.4-dev",
         "doctrine/doctrine-bundle": "1.0.*"
     },
+    "suggest": {
+        "jms/serializer-bundle": "Advanced JSON encoding capabilities, recommended."
+    },
     "autoload": {
         "psr-0": { "LanKit\\DatatablesBundle": "" }
     },

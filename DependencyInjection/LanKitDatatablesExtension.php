@@ -24,6 +24,10 @@ class LanKitDatatablesExtension extends Extension
 
         $loader = new Loader\XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.xml');
+
+        foreach ($config['service'] as $key => $service) {
+            $container->setAlias($this->getAlias() . '.' . $key, $service);
+        }
     }
 
     /**

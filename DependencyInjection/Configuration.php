@@ -20,9 +20,15 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('lankit_datatables');
 
-        // Here you should define the parameters that are allowed to
-        // configure your bundle. See the documentation linked above for
-        // more information on that topic.
+        $rootNode
+            ->children()
+                ->arrayNode('service')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('serializer')->defaultValue('jms_serializer.serializer')->end()
+                    ->end()
+                ->end()
+            ->end();
 
         return $treeBuilder;
     }

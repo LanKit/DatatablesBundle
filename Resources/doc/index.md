@@ -27,7 +27,17 @@ of values are returned for the final field in question.
 
 ## Prerequisites
 
-This version of the bundle requires Symfony 2.1+.
+This version of the bundle requires Symfony 2.1+. This bundle also needs the JMSSerializerBundle
+for JSON encoding. If you do not have that bundle registered you will need to supply a different
+serializer service in your config file...
+
+```yml
+// app/config.yml
+
+lankit_datatables:
+    services:
+        serializer: some_other_serializer # Defaults to jms_serializer.serializer
+```
 
 ## Installation
 

@@ -62,6 +62,11 @@ class Datatable
     const RESULT_RESPONSE = 'Response';
 
     /**
+     * @var object The serializer used to JSON encode data
+     */
+    protected $serializer;
+
+    /**
      * @var string The default join type to use
      */
     protected $defaultJoinType;
@@ -156,12 +161,13 @@ class Datatable
      */
     protected $datatable;
 
-    public function __construct(array $request, EntityRepository $repository, ClassMetadata $metadata, EntityManager $em)
+    public function __construct(array $request, EntityRepository $repository, ClassMetadata $metadata, EntityManager $em, $serializer)
     {
         $this->em = $em;
         $this->request = $request;
         $this->repository = $repository;
         $this->metadata = $metadata;
+        $this->serializer = $serializer;
         $this->tableName = Container::camelize($metadata->getTableName());
         $this->defaultJoinType = self::JOIN_INNER;
         $this->defaultResultType = self::RESULT_RESPONSE;
@@ -591,7 +597,7 @@ class Datatable
      */
     public function getSearchResultsJson()
     {
-        return json_encode($this->datatable);
+        return $this->serializer->serialize($this->datatable, 'json');
     }
 
     /**
@@ -607,7 +613,8 @@ class Datatable
      */
     public function getSearchResultsResponse()
     {
-        $response = new Response(json_encode($this->datatable));
+
+        $response = new Response($this->serializer->serialize($this->datatable, 'json'));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;

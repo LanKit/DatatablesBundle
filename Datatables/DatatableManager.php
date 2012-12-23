@@ -53,7 +53,8 @@ class DatatableManager
             $this->container->get('request')->query->all(),
             $this->doctrine->getRepository($class),
             $this->doctrine->getEntityManager()->getClassMetadata($class),
-            $this->doctrine->getEntityManager()
+            $this->doctrine->getEntityManager(),
+            $this->container->get('lankit_datatables.serializer')
         );
     }
 }
