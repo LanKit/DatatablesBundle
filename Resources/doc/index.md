@@ -115,8 +115,8 @@ public function getDatatableAction()
 
 ## Search Result Response Types
 
-By default, when you execute the `getSearchResults` method, a Symfony `Resoponse` object will be returned.
-If you need a different format for the respose, you could also specify the result type manually using the
+By default, when you execute the `getSearchResults` method, a Symfony `Response` object will be returned.
+If you need a different format for the response, you can specify the result type manually using the
 constants `Datatable::RESULT_ARRAY` and `Datatable::RESULT_JSON`:
 
 ``` php
