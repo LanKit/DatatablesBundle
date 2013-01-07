@@ -18,7 +18,7 @@
  *
  *     { "mData": "customer.location.address" }
  *
- * Félix-Antoine Paradis is the author of the original implementation this is
+ * Fï¿½lix-Antoine Paradis is the author of the original implementation this is
  * built off of, see: https://gist.github.com/1638094 
  */
 
@@ -410,7 +410,7 @@ class Datatable
         // Individual column filtering
         $andExpr = $qb->expr()->andX();
         for ($i=0 ; $i < count($this->parameters); $i++) {
-            if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && !empty($this->request['sSearch_'.$i])) {
+            if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && isset($this->request['sSearch_'.$i])) {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
                 $andExpr->add($qb->expr()->like(
                     $this->associations[$i]['fullName'],
