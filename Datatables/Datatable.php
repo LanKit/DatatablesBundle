@@ -62,6 +62,13 @@ class Datatable
     const RESULT_RESPONSE = 'Response';
 
     /**
+     * @var array Holds callbacks to be used
+     */
+    protected $callbacks = array(
+        'WhereBuilder' => array(),
+    );
+
+    /**
      * @var object The serializer used to JSON encode data
      */
     protected $serializer;
@@ -422,6 +429,12 @@ class Datatable
         if ($andExpr->count() > 0) {
             $qb->andWhere($andExpr);
         }
+
+        if (!empty($this->callbacks['WhereBuilder'])) {
+            foreach ($this->callbacks['WhereBuilder'] as $callback) {
+                $callback($qb);
+            }
+        }
     }
 
     /**
@@ -613,7 +626,6 @@ class Datatable
      */
     public function getSearchResultsResponse()
     {
-
         $response = new Response($this->serializer->serialize($this->datatable, 'json'));
         $response->headers->set('Content-Type', 'application/json');
 
@@ -641,6 +653,16 @@ class Datatable
         $this->setAssociations($qb);
         $this->setWhere($qb);
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * @param object A callback function to be used at the end of 'setWhere'
+     */
+    public function addWhereBuilderCallback($callback) {
+        if (!is_callable($callback)) {
+            throw new \Exception("The callback argument must be callable.");
+        }
+        $this->callbacks['WhereBuilder'][] = $callback;
     }
 
     public function getOffset()
