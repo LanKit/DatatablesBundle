@@ -663,6 +663,8 @@ class Datatable
             throw new \Exception("The callback argument must be callable.");
         }
         $this->callbacks['WhereBuilder'][] = $callback;
+
+        return $this;
     }
 
     public function getOffset()
