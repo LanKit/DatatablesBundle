@@ -104,10 +104,10 @@ public function getDatatableAction()
     $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
      // The default type for all joins is inner. Change it to left if desired.
-    $dataTable->setDefaultJoinType(Datatable::JOIN_LEFT);
+    $datatable->setDefaultJoinType(Datatable::JOIN_LEFT);
 
     // Can set JOIN_LEFT or JOIN_INNER on a per-column basis
-    $dataTable->setJoinType('customer', Datatable::JOIN_INNER);
+    $datatable->setJoinType('customer', Datatable::JOIN_INNER);
 
     return $datatable->getSearchResults();
 }
@@ -131,3 +131,38 @@ public function getDatatableAction()
     $datatableArray = $datatable->getSearchResults(Datatable::RESULT_ARRAY);
 }
 ```
+
+## Pre-Filtering Search Results
+
+In many cases you may want to pre-filter which entities the datatables response will return, which 
+would then be further filtered through a user global or individual column search. To accomplish
+this you can add callbacks with the `addWhereBuilderCallback` method. The callback will execute at the
+end of the `setWhere` method which builds the WHERE clause for the QueryBuilder object. The callback
+is passed the QueryBuilder instance as an argument.
+
+``` php
+
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+
+    // Add the $datatable variable, or other needed variables, to the callback scope
+    $datatable->addWhereBuilderCallback(function($qb) use ($datatable) {
+            $andExpr = $qb->expr()->andX();
+
+            // The entity is always referred to using the CamelCase of its table name
+            $andExpr->add($qb->expr()->eq('Customer.isActive','1'));
+
+            // Important to use 'andWhere' here...
+            $qb->andWhere($andExpr);
+
+    });
+
+    return $datatable->getSearchResults();
+}
+```
+
+As noted above, all join names are done by using CamelCase on the table name of the entity. Related 
+entities are separated out from the main entity with an underscore. So an entity relation on `Customer` 
+called `Location` with a field name called `city`, would be referenced in QueryBuilder as 
+`Customer_Location.city`
