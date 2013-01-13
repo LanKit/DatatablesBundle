@@ -1,13 +1,13 @@
 Getting Started With LanKitDatatablesBundle
 ===========================================
 
-[Prerequisites](#prerequisites)
-[Installation](#installation)
-[Usage](#usage)
-[Entity Associations and Join Types](#entity-associations-and-join-types)
-[Search Result Response Types](#search-response-result-types)
-[Pre-Filtering Search Results](#pre-filtering-search-results)
-[DateTime Formatting](#datetime-formatting)
+* [Prerequisites](#prerequisites)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Entity Associations and Join Types](#entity-associations-and-join-types)
+* [Search Result Response Types](#search-response-result-types)
+* [Pre-Filtering Search Results](#pre-filtering-search-results)
+* [DateTime Formatting](#datetime-formatting)
 
 This bundle provides an intuitive way to process DataTables.js requests by
 using mData. The mData from the DataTables request corresponds to fields and
