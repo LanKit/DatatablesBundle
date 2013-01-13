@@ -28,7 +28,9 @@ of values are returned for the final field in question.
 ## Prerequisites
 
 This version of the bundle requires Symfony 2.1+. This bundle also needs the JMSSerializerBundle
-for JSON encoding. If you do not have that bundle registered you will need to supply a different
+for JSON encoding. For information on installing the JMSSerializerBundle please look [here](http://jmsyst.com/bundles/JMSSerializerBundle/master/installation).
+
+If you do not have that bundle registered you will need to supply a different
 serializer service in your config file...
 
 ```yml
