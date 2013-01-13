@@ -1,6 +1,14 @@
 Getting Started With LanKitDatatablesBundle
 ===========================================
 
+[Prerequisites](#prerequisites)
+[Installation](#installation)
+[Usage](#usage)
+[Entity Associations and Join Types](#entity-associations-and-join-types)
+[Search Result Response Types](#search-response-result-types)
+[Pre-Filtering Search Results](#pre-filtering-search-results)
+[DateTime Formatting](#datetime-formatting)
+
 This bundle provides an intuitive way to process DataTables.js requests by
 using mData. The mData from the DataTables request corresponds to fields and
 associations on a specific entity. You can access related entities off the 
@@ -168,3 +176,38 @@ As noted above, all join names are done by using CamelCase on the table name of 
 entities are separated out from the main entity with an underscore. So an entity relation on `Customer` 
 called `Location` with a field name called `city`, would be referenced in QueryBuilder as 
 `Customer_Location.city`
+
+## DateTime Formatting
+
+All formatting is handled by the serializer service in use (likely JMSSerializer). To change the DateTime
+formatting when using the JMSSerializer you can either use annotation or define a default format in
+your `app/config/config.yml` file.
+
+```yml
+jms_serializer:
+    handlers:
+        datetime:
+            default_format: "m-d-Y @ H:i:s"
+```
+
+If you only want a format for a specific field you would use the annotation strategy, such as...
+
+```php
+namespace Acme\DemoBundle\Entity;
+
+use JMS\Serializer\Annotation as Serializer;
+use Doctrine\ORM\Mapping as ORM;
+
+// ...
+
+    /**
+     * @var \DateTime
+     *
+     * @Serializer\Type("DateTime<'Y-m-d'>")
+     * @ORM\Column(name="created", type="datetime")
+     */
+
+// ...
+```
+
+For more details on formatting output, please refer to [this document](http://jmsyst.com/libs/serializer/master/reference/annotations).
