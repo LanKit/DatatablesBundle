@@ -5,7 +5,7 @@ Getting Started With LanKitDatatablesBundle
 * [Installation](#installation)
 * [Usage](#usage)
 * [Entity Associations and Join Types](#entity-associations-and-join-types)
-* [Search Result Response Types](#search-response-result-types)
+* [Search Result Response Types](#search-result-response-types)
 * [Pre-Filtering Search Results](#pre-filtering-search-results)
 * [DateTime Formatting](#datetime-formatting)
 
