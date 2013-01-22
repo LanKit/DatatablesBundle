@@ -32,7 +32,7 @@ class DatatableManager
     protected function getClassName($className) {
         if (strpos($className, ':') !== false) {
            list($namespaceAlias, $simpleClassName) = explode(':', $className);
-           $className = $this->doctrine->getEntityManager()->getConfiguration()
+           $className = $this->doctrine->getManager()->getConfiguration()
                ->getEntityNamespace($namespaceAlias) . '\\' . $simpleClassName;
         }
         return $className;
@@ -46,14 +46,14 @@ class DatatableManager
     {
         $class = $this->getClassName($class);
 
-        $metadata = $this->doctrine->getEntityManager()->getClassMetadata($class);
+        $metadata = $this->doctrine->getManager()->getClassMetadata($class);
         $repository = $this->doctrine->getRepository($class);
 
         return new Datatable(
             $this->container->get('request')->query->all(),
             $this->doctrine->getRepository($class),
-            $this->doctrine->getEntityManager()->getClassMetadata($class),
-            $this->doctrine->getEntityManager(),
+            $this->doctrine->getManager()->getClassMetadata($class),
+            $this->doctrine->getManager(),
             $this->container->get('lankit_datatables.serializer')
         );
     }
