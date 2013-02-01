@@ -69,6 +69,11 @@ class Datatable
     );
 
     /**
+     * @var boolean Whether to hide the filtered count if using pre-filter callbacks
+     */
+    protected $hideFilteredCount = true;
+
+    /**
      * @var object The serializer used to JSON encode data
      */
     protected $serializer;
@@ -361,6 +366,16 @@ class Datatable
     }
 
     /**
+     * @param boolean Whether to hide the filtered count if using prefilter callbacks
+     */
+    public function hideFilteredCount($hideFilteredCount)
+    {
+        $this->hideFilteredCount = (bool) $hideFilteredCount;
+
+        return $this;
+    }
+
+    /**
      * Set the scope of the result set
      *
      * @param QueryBuilder The Doctrine QueryBuilder object
@@ -637,10 +652,16 @@ class Datatable
      */
     public function getCountAllResults()
     {
-        return (int) $this->repository->createQueryBuilder($this->tableName)
-            ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $qb = $this->repository->createQueryBuilder($this->tableName)
+            ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
+
+        if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount)  {
+            foreach ($this->callbacks['WhereBuilder'] as $callback) {
+                $callback($qb);
+            }
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
     
     /**
