@@ -670,7 +670,7 @@ class Datatable
     public function getCountFilteredResults()
     {
         $qb = $this->repository->createQueryBuilder($this->tableName);
-        $qb->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
+        $qb->select('count(distinct ' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
         $this->setAssociations($qb);
         $this->setWhere($qb);
         return (int) $qb->getQuery()->getSingleScalarResult();
