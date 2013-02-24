@@ -29,6 +29,7 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Config\Definition\Exception\Exception;
@@ -127,11 +128,6 @@ class Datatable
      * @var object The QueryBuilder instance
      */
     protected $qb;
-
-    /**
-     * @var array The results of the QueryBuilder instance
-     */
-    protected $fresults;
 
     /**
      * @var integer The number of records the DataTable can display in the current draw
@@ -542,10 +538,12 @@ class Datatable
      */
     public function executeSearch()
     {
-        $this->fresults = $this->qb->getQuery()->getResult(Query::HYDRATE_ARRAY);
         $output = array("aaData" => array());
 
-        foreach ($this->fresults as $item) {
+        $query = $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
+        $paginator = new Paginator($query, true);
+
+        foreach ($paginator as $item) {
             // Go through each requested column, transforming the array as needed for DataTables
             for ($i = 0 ; $i < count($this->parameters); $i++) {
                 // Results are already correctly formatted if this is the case...
