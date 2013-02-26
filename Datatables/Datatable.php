@@ -541,7 +541,7 @@ class Datatable
         $output = array("aaData" => array());
 
         $query = $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
-        $paginator = new Paginator($query, true);
+        $paginator = new Paginator($query, $this->doesQueryContainCollections());
 
         foreach ($paginator as $item) {
             // Go through each requested column, transforming the array as needed for DataTables
@@ -579,6 +579,19 @@ class Datatable
         $this->datatable = array_merge($outputHeader, $output);
 
         return $this;
+    }
+
+    /**
+     * @return boolean Whether any mData contains an association that is a collection
+     */
+    protected function doesQueryContainCollections()
+    {
+        foreach ($this->associations as $column) {
+            if ($column['containsCollections']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
