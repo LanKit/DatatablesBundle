@@ -17,10 +17,16 @@ class DatatableManager
      */
     protected $container;
 
-    public function __construct(DoctrineRegistry $doctrine, ContainerInterface $container)
+    /**
+     * @var boolean Whether or not to use the Doctrine Paginator utility by default
+     */
+    protected $useDoctrinePaginator;
+
+    public function __construct(DoctrineRegistry $doctrine, ContainerInterface $container, $useDoctrinePaginator)
     {
         $this->doctrine = $doctrine;
         $this->container = $container;
+        $this->useDoctrinePaginator = $useDoctrinePaginator;
     }
 
     /**
@@ -49,13 +55,14 @@ class DatatableManager
         $metadata = $this->doctrine->getManager()->getClassMetadata($class);
         $repository = $this->doctrine->getRepository($class);
 
-        return new Datatable(
+        $datatable = new Datatable(
             $this->container->get('request')->query->all(),
             $this->doctrine->getRepository($class),
             $this->doctrine->getManager()->getClassMetadata($class),
             $this->doctrine->getManager(),
             $this->container->get('lankit_datatables.serializer')
         );
+        return $datatable->useDoctrinePaginator($this->useDoctrinePaginator); 
     }
 }
 

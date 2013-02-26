@@ -12,6 +12,7 @@
         <service id="lankit_datatables" class="%lankit_datatables_manager.class%">
             <argument type="service" id="doctrine" />
             <argument type="service" id="service_container" />
+            <argument /> <!-- use_doctrine_paginator -->
         </service>
     </services>
 </container>

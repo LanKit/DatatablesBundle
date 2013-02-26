@@ -22,6 +22,12 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->arrayNode('datatable')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('use_doctrine_paginator')->defaultTrue()->end()
+                    ->end()
+                ->end()
                 ->arrayNode('service')
                     ->addDefaultsIfNotSet()
                     ->children()

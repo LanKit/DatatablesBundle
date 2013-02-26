@@ -70,6 +70,11 @@ class Datatable
     );
 
     /**
+     * @var boolean Whether or not to use the Doctrine Paginator utility
+     */
+    protected $useDoctrinePaginator = true;
+
+    /**
      * @var boolean Whether to hide the filtered count if using pre-filter callbacks
      */
     protected $hideFilteredCount = true;
@@ -196,6 +201,16 @@ class Datatable
     public function getParameters()
     {
         return $this->parameters;
+    }
+
+    /**
+     * @param boolean Whether or not to use the Doctrine Paginator utility
+     */
+    public function useDoctrinePaginator($useDoctrinePaginator)
+    {
+        $this->useDoctrinePaginator = (bool) $useDoctrinePaginator;
+
+        return $this;
     }
 
     /**
@@ -541,9 +556,10 @@ class Datatable
         $output = array("aaData" => array());
 
         $query = $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
-        $paginator = new Paginator($query, $this->doesQueryContainCollections());
+        $items = $this->useDoctrinePaginator ?
+            new Paginator($query, $this->doesQueryContainCollections()) : $query->execute();
 
-        foreach ($paginator as $item) {
+        foreach ($items as $item) {
             // Go through each requested column, transforming the array as needed for DataTables
             for ($i = 0 ; $i < count($this->parameters); $i++) {
                 // Results are already correctly formatted if this is the case...

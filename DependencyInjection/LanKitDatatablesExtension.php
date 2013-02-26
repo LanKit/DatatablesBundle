@@ -28,6 +28,9 @@ class LanKitDatatablesExtension extends Extension
         foreach ($config['service'] as $key => $service) {
             $container->setAlias($this->getAlias() . '.' . $key, $service);
         }
+
+        $container->getDefinition('lankit_datatables')
+            ->replaceArgument(2, $config['datatable']['use_doctrine_paginator']);
     }
 
     /**

@@ -8,6 +8,7 @@ Getting Started With LanKitDatatablesBundle
 * [Search Result Response Types](#search-result-response-types)
 * [Pre-Filtering Search Results](#pre-filtering-search-results)
 * [DateTime Formatting](#datetime-formatting)
+* [The Doctrine Paginator and MS SQL](#the-doctrine-paginator-and-ms-sql)
 
 This bundle provides an intuitive way to process DataTables.js requests by
 using mData. The mData from the DataTables request corresponds to fields and
@@ -211,3 +212,21 @@ use Doctrine\ORM\Mapping as ORM;
 ```
 
 For more details on formatting output, please refer to [this document](http://jmsyst.com/libs/serializer/master/reference/annotations).
+
+## The Doctrine Paginator and MS SQL
+
+By default, the Doctrine Paginator utility is used to correctly set limits and offsets. However, using it may cause issues with
+MS SQL. You may receive an error like...
+
+`SQL Error - The ORDER BY clause is invalid in views, inline functions, derived tables, subqueries, and common table expressions, unless TOP, OFFSET or FOR XML is also specified`
+
+To get around this you can disable the use of the Paginator by doing the following...
+
+```yml
+lankit_datatables:
+    datatable:
+        use_doctrine_paginator: false
+```
+
+However, please note that by disabling the use of the paginator you may not get the full results from DataTables that you would
+expect.
