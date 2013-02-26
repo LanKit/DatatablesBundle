@@ -242,7 +242,7 @@ class Datatable
             $entityName = lcfirst(Container::camelize($field));
             if ($metadata->hasAssociation($entityName)) {
                 $joinOn = "$joinName.$entityName";
-                if (!empty($fields) && $metadata->isCollectionValuedAssociation($entityName)) {
+                if ($metadata->isCollectionValuedAssociation($entityName)) {
                     $association['containsCollections'] = true;
                 }
                 $metadata = $this->em->getClassMetadata(
