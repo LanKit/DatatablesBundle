@@ -8,6 +8,7 @@ Getting Started With LanKitDatatablesBundle
 * [Search Result Response Types](#search-result-response-types)
 * [Pre-Filtering Search Results](#pre-filtering-search-results)
 * [DateTime Formatting](#datetime-formatting)
+* [DT_RowId and DT_RowClass](#dt_rowid-and-dt_rowclass)
 * [The Doctrine Paginator and MS SQL](#the-doctrine-paginator-and-ms-sql)
 
 This bundle provides an intuitive way to process DataTables.js requests by
@@ -231,6 +232,29 @@ use Doctrine\ORM\Mapping as ORM;
 ```
 
 For more details on formatting output, please refer to [this document](http://jmsyst.com/libs/serializer/master/reference/annotations).
+
+## DT_RowId and DT_RowClass
+
+The properties DT_RowId and DT_RowClass are special DataTables.js properties. See the following article...
+
+http://datatables.net/release-datatables/examples/server_side/ids.html
+
+You can toggle and modify these properties with the methods `setDtRowClass`, `useDtRowClass`, and `useDtRowId`...
+
+``` php
+
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')
+        ->getDatatable('AcmeDemoBundle:Customer')
+        ->setDtRowClass('special-class') // Add whatever class(es) you want. Separate classes with a space.
+        ->useDtRowId(true);
+
+    return $datatable->getSearchResults();
+}
+```
+
+By default neither properties are added to the output
 
 ## The Doctrine Paginator and MS SQL
 

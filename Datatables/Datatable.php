@@ -80,6 +80,21 @@ class Datatable
     protected $hideFilteredCount = true;
 
     /**
+     * @var string Whether or not to add DT_RowId to each record
+     */
+    protected $useDtRowId = false;
+
+    /**
+     * @var string Whether or not to add DT_RowClass to each record if it is set
+     */
+    protected $useDtRowClass = true;
+
+    /**
+     * @var string The class to use for DT_RowClass
+     */
+    protected $dtRowClass = null;
+
+    /**
      * @var object The serializer used to JSON encode data
      */
     protected $serializer;
@@ -201,6 +216,36 @@ class Datatable
     public function getParameters()
     {
         return $this->parameters;
+    }
+
+    /**
+     * @param boolean Whether or not to add DT_RowId to each record
+     */
+    public function useDtRowId($useDtRowId)
+    {
+        $this->useDtRowId = (bool) $useDtRowId;
+
+        return $this;
+    }
+
+    /**
+     * @param boolean Whether or not to add DT_RowClass to each record
+     */
+    public function useDtRowClass($useDtRowClass)
+    {
+        $this->useDtRowClass = (bool) $useDtRowClass;
+
+        return $this;
+    }
+
+    /**
+     * @param string The class to use for DT_RowClass on each record
+     */
+    public function setDtRowClass($dtRowClass)
+    {
+        $this->dtRowClass = $dtRowClass;
+
+        return $this;
     }
 
     /**
@@ -562,6 +607,12 @@ class Datatable
         foreach ($items as $item) {
             // Go through each requested column, transforming the array as needed for DataTables
             for ($i = 0 ; $i < count($this->parameters); $i++) {
+                if ($this->useDtRowClass && !is_null($this->dtRowClass)) {
+                    $item['DT_RowClass'] = $this->dtRowClass;
+                }
+                if ($this->useDtRowId) {
+                    $item['DT_RowId'] = $item[$this->rootEntityIdentifier];
+                }
                 // Results are already correctly formatted if this is the case...
                 if (!$this->associations[$i]['containsCollections']) {
                     continue;
