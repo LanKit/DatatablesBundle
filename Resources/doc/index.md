@@ -187,7 +187,7 @@ then you can toggle it with the `hideFilteredCount` method.
 public function getDatatableAction()
 {
     $datatable = $this->get('lankit_datatables')
-        ->getDatatable('AcmeDemoBundle:Customer');
+        ->getDatatable('AcmeDemoBundle:Customer')
         ->addWhereBuilderCallback(function($qb) use ($datatable) {
             // ...
         })
