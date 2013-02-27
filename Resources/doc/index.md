@@ -178,6 +178,25 @@ entities are separated out from the main entity with an underscore. So an entity
 called `Location` with a field name called `city`, would be referenced in QueryBuilder as 
 `Customer_Location.city`
 
+By default, pre-filtered results will return a total count back to DataTables.js with the filtering applied.
+If you would like the total count to reflect the total number of entities before the pre-filtering was applied
+then you can toggle it with the `hideFilteredCount` method.
+
+``` php
+
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')
+        ->getDatatable('AcmeDemoBundle:Customer');
+        ->addWhereBuilderCallback(function($qb) use ($datatable) {
+            // ...
+        })
+        ->hideFilteredCount(false);
+
+    return $datatable->getSearchResults();
+}
+```
+
 ## DateTime Formatting
 
 All formatting is handled by the serializer service in use (likely JMSSerializer). To change the DateTime
