@@ -105,6 +105,11 @@ class Datatable
     protected $defaultJoinType;
 
     /**
+     * @var object The metadata for the root entity
+     */
+    protected $metadata;
+
+    /**
      * @var object The Doctrine Entity Repository
      */
     protected $repository;
