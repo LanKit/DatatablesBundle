@@ -610,14 +610,14 @@ class Datatable
             new Paginator($query, $this->doesQueryContainCollections()) : $query->execute();
 
         foreach ($items as $item) {
+            if ($this->useDtRowClass && !is_null($this->dtRowClass)) {
+                $item['DT_RowClass'] = $this->dtRowClass;
+            }
+            if ($this->useDtRowId) {
+                $item['DT_RowId'] = $item[$this->rootEntityIdentifier];
+            }
             // Go through each requested column, transforming the array as needed for DataTables
             for ($i = 0 ; $i < count($this->parameters); $i++) {
-                if ($this->useDtRowClass && !is_null($this->dtRowClass)) {
-                    $item['DT_RowClass'] = $this->dtRowClass;
-                }
-                if ($this->useDtRowId) {
-                    $item['DT_RowId'] = $item[$this->rootEntityIdentifier];
-                }
                 // Results are already correctly formatted if this is the case...
                 if (!$this->associations[$i]['containsCollections']) {
                     continue;
