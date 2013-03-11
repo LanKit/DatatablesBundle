@@ -5,10 +5,11 @@ Getting Started With LanKitDatatablesBundle
 * [Installation](#installation)
 * [Usage](#usage)
 * [Entity Associations and Join Types](#entity-associations-and-join-types)
-* [Using server side control](#server-side-control)
+* [Using Server Side Control](#server-side-control)
 * [Search Result Response Types](#search-result-response-types)
 * [Pre-Filtering Search Results](#pre-filtering-search-results)
 * [DateTime Formatting](#datetime-formatting)
+* [Column Post-filtering](#column-post-filtering)
 * [DT_RowId and DT_RowClass](#dt_rowid-and-dt_rowclass)
 * [The Doctrine Paginator and MS SQL](#the-doctrine-paginator-and-ms-sql)
 
@@ -261,7 +262,7 @@ As noted above this simplifies the way of extending the query filtering. All you
 array of `Doctrine\ORM\Query\Expr` objects in your callback function. All this objects will be automatically
 added to a `andX` collection and then inserted into the Datatable QueryBuilder using a `andWhere` clause. 
 
-## Using server side control
+## Using Server Side Control
 
 By default the server side control is off, it means that the bundle will answer to every field request
 from datatables.js. To change this behavior you first need to activate the server side control by providing
@@ -330,7 +331,7 @@ $(document).ready(function(){
 
 ## DateTime Formatting
 
-All formatting is handled by the serializer service in use (likely JMSSerializer). To change the DateTime
+All formatting is generally handled by the serializer service in use (likely JMSSerializer). To change the DateTime
 formatting when using the JMSSerializer you can either use annotation or define a default format in
 your `app/config/config.yml` file.
 
@@ -362,6 +363,56 @@ use Doctrine\ORM\Mapping as ORM;
 ```
 
 For more details on formatting output, please refer to [this document](http://jmsyst.com/libs/serializer/master/reference/annotations).
+
+## Column Post-filtering
+
+You can also use a callback function to filter values from your columns, using this approach you can define your own logic to deal with 
+any kind of formatting, translation (if not DB based), transformation, etc. You can filter any value/object to whatever you want before
+they get returned to datatables.js instance in your application front-end.
+
+To use this feature you have two alternatives, the first one by using a third argument on `addColumn` method:
+
+```php
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer', true);
+    $dataTable
+        ->addColumn(
+            'customer.created', 
+            array(
+                Datatable::COLUMN_TITLE => 'Created at'
+            ),
+            function ($v) {
+                return $v->format('m/d/Y H:i:s');
+            }
+        )
+    ;
+
+    return $datatable->getSearchResults();
+}
+```
+
+And the second one using `addColumnFilter` method:
+
+```php
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer', true);
+    $dataTable
+        ->addColumn(
+            'customer.created', 
+            array(
+                Datatable::COLUMN_TITLE => 'Created at'
+            )
+        )
+    ;
+
+    $datatable->addColumnFilter('customer.created', function ($v) {
+        return $v->format('m/d/Y H:i:s');
+    });
+    return $datatable->getSearchResults();
+}
+```
 
 ## DT_RowId and DT_RowClass
 

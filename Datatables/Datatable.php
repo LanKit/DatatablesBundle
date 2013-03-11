@@ -87,7 +87,8 @@ class Datatable
      */
     protected $callbacks = array(
         'WhereBuilder' => array(),
-        'WhereCollection' => array()
+        'WhereCollection' => array(),
+        'columnFilter' => array()
     );
 
     /**
@@ -356,11 +357,12 @@ class Datatable
      *
      * @param $key A dotted-notation property format key used by DQL to fetch your object. Use the property from the object that you provided to getDatatable() method
      * @param array $rawOptions (optional) A map with raw keys used by datatables.js aoColumns property
+     * @param callback $filterCallback (optional) A filter callback to be applied to the current column after retrieved from QueryBuilder;
      */
-    public function addColumn($key, $rawOptions = null)
+    public function addColumn($key, $rawOptions = null, $filterCallback = null)
     {
         if (!$this->serverSideControl) {
-            throw new \Exception('This method is not allowed to use if you are not using server-side control datatables.');
+            throw new \Exception(sprintf("The \"%s\" method is not allowed to use if you are not using server-side control datatables.", __FUNCTION__));
         }
 
         if (is_null($rawOptions)) {
@@ -381,8 +383,29 @@ class Datatable
         }
 
         $this->associations[] = $association;
+        if (!is_null($filterCallback)) {
+            $this->addColumnFilter($key, $filterCallback);
+        }
 
         return $this;
+    }
+
+    /**
+     * Adds a function to filter the value returned by key
+     *
+     * @param string $key Your key name
+     * @param callback $filterCallback The function used to filter the result value of $key
+     * @throws \Exception If the filterCallback is not a callable function
+     */
+    public function addColumnFilter($key, $filterCallback)
+    {
+        if (!is_callable($filterCallback)) {
+            throw new \Exception(sprintf("The second argument of \"%s\" method must be a callable function", __FUNCTION__));
+        }
+        if (!isset($this->callbacks['columnFilter'][$key])) {
+            $this->callbacks['columnFilter'][$key] = array();
+        }
+        $this->callbacks['columnFilter'][$key][] = $filterCallback;
     }
 
     /**
@@ -405,9 +428,14 @@ class Datatable
     }
 
     /**
-     * Add column dql part name
+     * Automatically sets the DQL field name of a DataTables column based on its key
      *
-     * @param string $key A key used as reference to a DataTables column
+     * You should use this method when you need to call getColumnDQLPartName method inside a filter callback for a entity
+     * field that does not belongs to your datatable.js instance, but somehow you need to use it to do some filtering or
+     * whatever.
+     *
+     * @param string $key A dotted notation key value of your entity field
+     * @return Datatable
      */
     public function addColumnDQLPartName($key)
     {
@@ -765,6 +793,7 @@ class Datatable
         foreach ($items as $item) {
             // Go through each requested column, transforming the array as needed for DataTables
             for ($i = 0 ; $i < count($this->parameters); $i++) {
+                $parameterKey = $this->parameters[$i];
                 if ($this->useDtRowClass && !is_null($this->dtRowClass)) {
                     $item['DT_RowClass'] = $this->dtRowClass;
                 }
@@ -773,6 +802,9 @@ class Datatable
                 }
                 // Results are already correctly formatted if this is the case...
                 if (!$this->associations[$i]['containsCollections']) {
+                    $item[$parameterKey] = isset($item[$parameterKey]) ? $item[$parameterKey] : null; // Inject missing parameters
+                    $this->applyColumnFiltering($parameterKey, $item[$parameterKey]); // Apply column filtering if needed
+
                     continue;
                 }
 
@@ -789,9 +821,13 @@ class Datatable
                             $children = array_merge_recursive($children, $childItem);
                         }
                         $rowRef = $children;
+                    } else { // Only leaf nodes...
+                        $rowRef[$field] = isset($rowRef[$field]) ? $rowRef[$field] : null; // Inject missing parameters
+                        $this->applyColumnFiltering($parameterKey, $rowRef);
                     }
                 }
             }
+
             $output['aaData'][] = $item;
         }
 
@@ -809,6 +845,27 @@ class Datatable
         $this->datatable = array_merge($outputHeader, $output);
 
         return $this;
+    }
+
+    /**
+     * Apply a columnFilter to the column value $value identified by $key.
+     *
+     * @param string $key Column key
+     * @param mixed $value A value of any type passed by reference
+     * @return bool It return false if no filtering was applied to the column, or true if the filter was applied
+     */
+    private function applyColumnFiltering($key, &$value)
+    {
+        if (!isset($this->callbacks['columnFilter'][$key])) {
+            return false;
+        }
+
+        $columnFilterCallback = $this->callbacks['columnFilter'][$key];
+        foreach ($columnFilterCallback as $callback) {
+            $value = $callback($value);
+        }
+
+        return true;
     }
 
     /**
