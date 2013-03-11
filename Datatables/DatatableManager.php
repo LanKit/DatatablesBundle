@@ -45,10 +45,11 @@ class DatatableManager
     }
 
     /**
-     * @param string An entity class name or alias 
+     * @param string $class An entity class name or alias
+     * @param boolean $serverSideControl This is a control flag to choose if the access to DataTables information will be controlled on server side or not (default: false)
      * @return object Get a DataTable instance for the given entity
      */
-    public function getDatatable($class)
+    public function getDatatable($class, $serverSideControl = false)
     {
         $class = $this->getClassName($class);
 
@@ -60,7 +61,8 @@ class DatatableManager
             $this->doctrine->getRepository($class),
             $this->doctrine->getManager()->getClassMetadata($class),
             $this->doctrine->getManager(),
-            $this->container->get('lankit_datatables.serializer')
+            $this->container->get('lankit_datatables.serializer'),
+            $serverSideControl
         );
         return $datatable->useDoctrinePaginator($this->useDoctrinePaginator); 
     }

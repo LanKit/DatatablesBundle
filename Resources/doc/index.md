@@ -5,6 +5,7 @@ Getting Started With LanKitDatatablesBundle
 * [Installation](#installation)
 * [Usage](#usage)
 * [Entity Associations and Join Types](#entity-associations-and-join-types)
+* [Using server side control](#server-side-control)
 * [Search Result Response Types](#search-result-response-types)
 * [Pre-Filtering Search Results](#pre-filtering-search-results)
 * [DateTime Formatting](#datetime-formatting)
@@ -14,7 +15,7 @@ Getting Started With LanKitDatatablesBundle
 This bundle provides an intuitive way to process DataTables.js requests by
 using mData. The mData from the DataTables request corresponds to fields and
 associations on a specific entity. You can access related entities off the 
-base entity by using dottted notation.
+base entity by using dotted notation.
 
 For example, a mData structure to query an entity may look like the following:
 
@@ -34,6 +35,24 @@ limitations with entity associations.
 
 If an association is a collection (ie. many associated records), then an array 
 of values are returned for the final field in question.
+
+This bundle supports two kind of approaches: the default one is totally controlled
+by the front-end application, it means that it will parse any required information
+that your datatables.js would require through the `aoColumns` array of `mData`
+properties. The second one is called `serverSideControl`, using this approach you
+can restrict the information available for a user. It will throw an error if the 
+user injects a malicious javascript code to require restricted information, like:
+
+``` js
+    "aoColumns": [
+        { "mData": "email" },
+        { "mData": "password" }
+    ]
+```
+
+Behind the scenes `aoColumns` still in control of the information exchange with 
+the bundle, but its the bundle who will provided datatable.js the information of
+which columns are available.
 
 ## Prerequisites
 
@@ -158,12 +177,19 @@ public function getDatatableAction()
 {
     $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
+    /* 
+     * This is automatically for any coloumn of your dataTable, but on this case customer.isActive is
+     * a filtering criteria to be used inside a callback, so you need to add it manually. If the 
+     * filtered variable is a column then you don't need to do anything.
+     */
+    $dataTable->addColumnDQLPartName('customer.isActive'); 
+
     // Add the $datatable variable, or other needed variables, to the callback scope
     $datatable->addWhereBuilderCallback(function($qb) use ($datatable) {
             $andExpr = $qb->expr()->andX();
 
-            // The entity is always referred to using the CamelCase of its table name
-            $andExpr->add($qb->expr()->eq('Customer.isActive','1'));
+            // The entity is referred using a helper method of Datatable object
+            $andExpr->add($qb->expr()->eq($dataTable->getColumnDQLPartName('customer.isActive'), '1'));
 
             // Important to use 'andWhere' here...
             $qb->andWhere($andExpr);
@@ -174,10 +200,12 @@ public function getDatatableAction()
 }
 ```
 
-As noted above, all join names are done by using CamelCase on the table name of the entity. Related 
-entities are separated out from the main entity with an underscore. So an entity relation on `Customer` 
-called `Location` with a field name called `city`, would be referenced in QueryBuilder as 
-`Customer_Location.city`
+As noted above, you get join names using `getColumnDQLPartName` method of your $datable object. You just need
+to pass as an argument the key used on your `mData` property or the key used by `addColumn` method (if you are
+using `serverSideControl` to control columns).
+So an entity relation on `Customer` called `Location` with a field name called `city`, would be retrieved in
+QueryBuilder with `getColumnDQLPartName` method of `$datatable` object using `customer.location.city` as its 
+key.
 
 By default, pre-filtered results will return a total count back to DataTables.js with the filtering applied.
 If you would like the total count to reflect the total number of entities before the pre-filtering was applied
@@ -196,6 +224,108 @@ public function getDatatableAction()
 
     return $datatable->getSearchResults();
 }
+```
+
+A shortcut method called `addWhereCollectionCallback` is also available to add a callback function with
+`where` instructions collections in the end of `setWhere`, the main difference to the previous one
+(`addWhereBuilderCallback`) is that the developer don't need to worry about the QueryBuilder and also reduces
+the risk of disrupting something while its working with more developers.
+
+``` php
+
+public function getDatatableAction()
+{
+    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+
+    $dataTable->addColumnDQLPartName('customer.isActive');
+    $dataTable->addColumnDQLPartName('customer.area');
+
+    $datatable->addWhereCollectionCallback(function($expr) use ($datatable) {
+        return array( // Important to return an array here...
+            $expr->eq(
+                $dataTable->getColumnDQLPartName('customer.isActive'),
+                '1'
+            ), 
+            $expr->neq(
+                $dataTable->getColumnDQLPartName('customer.area'),
+                $expr->literal(Customer::AREA_AGRICULTURE)
+            )
+        );
+    });
+
+    return $datatable->getSearchResults();
+}
+```
+
+As noted above this simplifies the way of extending the query filtering. All you need to do is to return an
+array of `Doctrine\ORM\Query\Expr` objects in your callback function. All this objects will be automatically
+added to a `andX` collection and then inserted into the Datatable QueryBuilder using a `andWhere` clause. 
+
+## Using server side control
+
+By default the server side control is off, it means that the bundle will answer to every field request
+from datatables.js. To change this behavior you first need to activate the server side control by providing
+a second argument to `getDatatable` service method. The second step is to call `addColumn` method for every
+desired information to be retrieved by datatables.js, let's consider the following: `description`, 
+`customer.lastname` and `customer.location.address`; So, the first argument is the attribute name using the
+same entity relationship and property dotted notation as before. The second argument is an array map with
+key => value pairs that represent some options of your column. It supports the raw notation of datables.js
+`aoColumns` variable, but its recommended the use of some constant values to avoid mistakes. 
+
+``` php
+
+public function getDatatableAction()
+{
+    // Notice the second argument, this will create a Datatable object server-side controlled
+    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer', true);
+    $dataTable
+        ->addColumn(
+            'customer.lastname', 
+            array(
+                Datatable::COLUMN_TITLE => 'Last name'
+            )
+        )
+        ->addColumn(
+            'description', 
+            array(
+                Datatable::COLUMN_TITLE => 'Full description',
+                Datatable::COLUMN_SORTABLE => false
+            )
+        )
+        ->addColumn(
+            'customer.location.address', 
+            array(
+                Datatable::COLUMN_TITLE => 'Address',
+                Datatable::COLUMN_SORTABLE => false,
+                Datatable::COLUMN_SEARCHABLE => false
+            )
+        )
+    ;
+
+    return $datatable->getSearchResults();
+}
+```
+
+The above code will not work without a minor modification in your front-end application, as explained before
+this bundle uses the `mData` values of `aoColumns` to process all reqired data. Now, instead of forcing the 
+front-end developer to provide an entity level information, this data will be automatically returned through
+`aoColumns` json object if the `serverSideControl` is set to true and if your columns are properly defined 
+inside your controllers actions. To make all of this happen just add a javascript on your code to make a
+request to `sAjaxSource` before creating datatables.js instance, if you are using jQuery it will be something
+like this:
+
+``` js
+$(document).ready(function(){
+    var sAjaxSource = 'http://URL_TO_GET_DATATABLE_ACTION';
+    $.getJSON(sAjaxSource, function(dataTable){
+        $('#example').dataTable({
+            'bProcessing': true,
+            'bServerSide': true,
+            'sAjaxSource': sAjaxSource,
+            'aoColumns': dataTable.aoColumns
+        });
+    });
+});
 ```
 
 ## DateTime Formatting

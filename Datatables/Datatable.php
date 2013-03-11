@@ -63,10 +63,31 @@ class Datatable
     const RESULT_RESPONSE = 'Response';
 
     /**
+     * Column property: sTitle
+     */
+    const COLUMN_TITLE = 'sTitle';
+
+    /**
+     * Column property: searchable
+     */
+    const COLUMN_SEARCHABLE = 'bSearchable';
+
+    /**
+     * Column property: sortable
+     */
+    const COLUMN_SORTABLE = 'bSortable';
+
+    /**
+     * Custom variable: sDtRowIdPrefix
+     */
+    const CUSTOM_VAR_ROW_ID_PREFIX = 'sDtRowIdPrefix';
+
+    /**
      * @var array Holds callbacks to be used
      */
     protected $callbacks = array(
         'WhereBuilder' => array(),
+        'WhereCollection' => array()
     );
 
     /**
@@ -83,6 +104,11 @@ class Datatable
      * @var string Whether or not to add DT_RowId to each record
      */
     protected $useDtRowId = false;
+
+    /**
+     * @var string If $useDtRowId is set to true then an id will be appended to each row, you can also specify a string to be concatenated in the beginning of each row id
+     */
+    protected $dtRowIdPrefix;
 
     /**
      * @var string Whether or not to add DT_RowClass to each record if it is set
@@ -133,6 +159,16 @@ class Datatable
      * @var array The parsed request variables for the DataTable
      */
     protected $parameters;
+
+    /**
+     * @var array A map with columns server-side defined
+     */
+    protected $aoColumns;
+
+    /**
+     * @var array A map with custom vars server-side defined
+     */
+    protected $aoCustomVars;
 
     /**
      * @var array Information relating to the specific columns requested
@@ -194,25 +230,50 @@ class Datatable
      */
     protected $datatable;
 
-    public function __construct(array $request, EntityRepository $repository, ClassMetadata $metadata, EntityManager $em, $serializer)
+    /**
+     * @var boolean A flag to control where aoColumns.mDataProp is defined, if used on server side then you need to use addColumn method
+     */
+    protected $serverSideControl;
+
+    /**
+     * @var array A map between column key name and the association map dql fullName
+     */
+    protected $columnsDqlPartName;
+
+    public function __construct(array $request, EntityRepository $repository, ClassMetadata $metadata, EntityManager $em, $serializer, $serverSideControl)
     {
         $this->em = $em;
         $this->request = $request;
         $this->repository = $repository;
         $this->metadata = $metadata;
         $this->serializer = $serializer;
+        $this->serverSideControl = $serverSideControl;
         $this->tableName = Container::camelize($metadata->getTableName());
         $this->defaultJoinType = self::JOIN_INNER;
         $this->defaultResultType = self::RESULT_RESPONSE;
-        $this->setParameters();
+        if ($this->serverSideControl === false) {
+            if (sizeof($this->request) == 0 || count(array_diff(array('iColumns', 'sEcho', 'sSearch', 'iDisplayStart', 'iDisplayLength'), array_keys($this->request)))) {
+                throw new \Exception('Unable to recognize a datatables.js valid request.');
+            }
+            $this->setParameters();
+        }
         $this->qb = $em->createQueryBuilder();
-        $this->echo = $this->request['sEcho'];
-        $this->search = $this->request['sSearch'];
-        $this->offset = $this->request['iDisplayStart'];
-        $this->amount = $this->request['iDisplayLength'];
 
         $identifiers = $this->metadata->getIdentifierFieldNames();
         $this->rootEntityIdentifier = array_shift($identifiers);
+
+        // Default vars to inject into 'aoCustomVars' when using server side control
+        $this->aoCustomVars = array();
+
+        if (sizeof($this->request) > 0) {
+            $this->echo = $this->request['sEcho'];
+            $this->search = $this->request['sSearch'];
+            $this->offset = $this->request['iDisplayStart'];
+            $this->amount = $this->request['iDisplayLength'];
+            $this->dtRowIdPrefix = isset($this->request[self::CUSTOM_VAR_ROW_ID_PREFIX])
+                ? $this->request[self::CUSTOM_VAR_ROW_ID_PREFIX]
+                : '';
+        }
     }
 
     /**
@@ -272,7 +333,8 @@ class Datatable
             $params = array();
             $associations = array();
             for ($i=0; $i < intval($this->request['iColumns']); $i++) {
-                $fields = explode('.', $this->request['mDataProp_' . $i]);
+                $key = $this->request['mDataProp_' . $i];
+                $fields = explode('.', $key);
                 $params[] = $this->request['mDataProp_' . $i];
                 $associations[] = array('containsCollections' => false);
 
@@ -284,6 +346,83 @@ class Datatable
             $this->parameters = $params;
             $this->associations = $associations;
         }
+    }
+
+    /**
+     * Add a new column to the Datatable object
+     *
+     * Parse and configure parameter/association using a per addColumn basis and also configures aoColumns to be used
+     * as a retrieved object by DataTables.js (it automatically includes mDataProp using the provided $key value)
+     *
+     * @param $key A dotted-notation property format key used by DQL to fetch your object. Use the property from the object that you provided to getDatatable() method
+     * @param array $rawOptions (optional) A map with raw keys used by datatables.js aoColumns property
+     */
+    public function addColumn($key, $rawOptions = null)
+    {
+        if (!$this->serverSideControl) {
+            throw new \Exception('This method is not allowed to use if you are not using server-side control datatables.');
+        }
+
+        if (is_null($rawOptions)) {
+            $rawOptions = array();
+        }
+
+        $rawOptions['mDataProp'] = $key;
+        $this->aoColumns[] = $rawOptions;
+        $this->parameters[] = $key;
+
+        $fields = explode('.', $key);
+        $association = array('containsCollections' => false);
+
+        if (count($fields) > 1) {
+            $this->setRelatedEntityColumnInfo($association, $fields);
+        } else {
+            $this->setSingleFieldColumnInfo($association, $fields[0]);
+        }
+
+        $this->associations[] = $association;
+
+        return $this;
+    }
+
+    /**
+     * Gets the DQL field name of a DataTables column
+     *
+     * @param string $key A key used as reference to a DataTables column
+     * @return string|null The DQL field name extracted from DataTables column key
+     */
+    public function getColumnDQLPartName($key)
+    {
+        if (!isset($this->columnsDqlPartName[$key])) {
+            throw new \Exception(sprintf(
+                "A missing key ['%s'] was detected in your datatable object when \"%s()\" method was called.",
+                $key,
+                __FUNCTION__
+            ));
+        }
+
+        return $this->columnsDqlPartName[$key];
+    }
+
+    /**
+     * Add column dql part name
+     *
+     * @param string $key A key used as reference to a DataTables column
+     */
+    public function addColumnDQLPartName($key)
+    {
+        $fields = explode('.', $key);
+        $association = array('containsCollections' => false);
+
+        if (count($fields) > 1) {
+            $this->setRelatedEntityColumnInfo($association, $fields);
+        } else {
+            $this->setSingleFieldColumnInfo($association, $fields[0]);
+        }
+
+        $this->columnsDqlPartName[$key] = $association['fullName'];
+
+        return $this;
     }
 
     /**
@@ -344,6 +483,7 @@ class Datatable
         $association['fieldName'] = $lastField;
         $association['joinName'] = $joinName;
         $association['fullName'] = $this->getFullName($association);
+        $this->columnsDqlPartName[$mdataName] = $association['fullName'];
     }
 
     /**
@@ -353,6 +493,7 @@ class Datatable
      * @param string The field name on the main entity
      */
     protected function setSingleFieldColumnInfo(array &$association, $fieldName) {
+        $key = $fieldName;
         $fieldName = Container::camelize($fieldName);
 
         if (!$this->metadata->hasField(lcfirst($fieldName))) {
@@ -365,6 +506,7 @@ class Datatable
         $association['fieldName'] = $fieldName;
         $association['entityName'] = $this->tableName;
         $association['fullName'] = $this->tableName . '.' . lcfirst($fieldName);
+        $this->columnsDqlPartName[$key] = $association['fullName'];
     }
 
     /**
@@ -511,6 +653,16 @@ class Datatable
                 $callback($qb);
             }
         }
+
+        if (!empty($this->callbacks['WhereCollection'])) {
+            foreach ($this->callbacks['WhereCollection'] as $callback) {
+                $whereCollection = $callback($qb->expr());
+                if (!is_array($whereCollection))
+                    throw new \Exception(sprintf("The function %s must return an array", $callback));
+
+                $qb->andWhere($qb->expr()->andX()->addMultiple($whereCollection));
+            }
+        }
     }
 
     /**
@@ -606,6 +758,7 @@ class Datatable
         $output = array("aaData" => array());
 
         $query = $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
+
         $items = $this->useDoctrinePaginator ?
             new Paginator($query, $this->doesQueryContainCollections()) : $query->execute();
 
@@ -616,7 +769,7 @@ class Datatable
                     $item['DT_RowClass'] = $this->dtRowClass;
                 }
                 if ($this->useDtRowId) {
-                    $item['DT_RowId'] = $item[$this->rootEntityIdentifier];
+                    $item['DT_RowId'] = $this->dtRowIdPrefix . $item[$this->rootEntityIdentifier];
                 }
                 // Results are already correctly formatted if this is the case...
                 if (!$this->associations[$i]['containsCollections']) {
@@ -647,6 +800,11 @@ class Datatable
             "iTotalRecords" => $this->getCountAllResults(),
             "iTotalDisplayRecords" => $this->getCountFilteredResults()
         );
+
+        if ($this->serverSideControl) {
+            $outputHeader['aoColumns'] = $this->aoColumns;
+            $outputHeader['aoCustomVars'] = $this->getAoCustomVars();
+        }
 
         $this->datatable = array_merge($outputHeader, $output);
 
@@ -738,9 +896,21 @@ class Datatable
         $qb = $this->repository->createQueryBuilder($this->tableName)
             ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
 
+        $this->setAssociations($qb);
+
         if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount)  {
             foreach ($this->callbacks['WhereBuilder'] as $callback) {
                 $callback($qb);
+            }
+        }
+
+        if (!empty($this->callbacks['WhereCollection']) && $this->hideFilteredCount)  {
+            foreach ($this->callbacks['WhereCollection'] as $callback) {
+                $whereCollection = $callback($qb->expr());
+                if (!is_array($whereCollection))
+                    throw new \Exception(sprintf("The function %s must return an array", $callback));
+
+                $qb->andWhere($qb->expr()->andX()->addMultiple($whereCollection));
             }
         }
 
@@ -771,6 +941,18 @@ class Datatable
         return $this;
     }
 
+    /**
+     * @param object A callback function to be used at the end of 'setWhere'
+     */
+    public function addWhereCollectionCallback($callback) {
+        if (!is_callable($callback)) {
+            throw new \Exception("The callback argument must be callable.");
+        }
+        $this->callbacks['WhereCollection'][] = $callback;
+
+        return $this;
+    }
+
     public function getOffset()
     {
         return $this->offset;
@@ -794,5 +976,50 @@ class Datatable
     public function getQueryBuilder()
     {
         return  $this->qb;
+    }
+
+    /**
+     * Add a custom variable key value pair to aoCustomVars custom object
+     * @param $key The key name
+     * @param $value The value for key
+     */
+    public function addCustomVar($key, $value)
+    {
+        $this->aoCustomVars[$key] = $value;
+    }
+
+    /**
+     * Gets custom variables
+     * @param bool $formatted If true it will convert the key value map into a 'name' => $key, 'value' => $value object array as the standard pattern of datatables.js (optional. Default: false)
+     * @return array A key value map of custom vars
+     */
+    public function getAoCustomVars($formatted = false)
+    {
+        if (!$formatted) {
+            return $this->aoCustomVars;
+        }
+
+        $oArr = array();
+        foreach ($this->getAoCustomVars() as $key => $value) {
+            $oArr[] = array('name' => $key, 'value' => $value);
+        }
+
+        return $oArr;
+    }
+
+    /**
+     * Sets a prefix for the DT_RowId
+     * (NOTE: this will be returned as a custom variable, you need to treat in your front-end app since datatables.js
+     * doesn't support it by default, you can use a callback to check server params, if 'aoCustomVars' exists and
+     * a 'sDtRowIdPrefix' is defined then just add the key/value pair to the 'fnServerParams' callback, this will force
+     * datatables to send the same variable back to the server again, then the server will process and parse that
+     * message to append properly the prefix to each row id)
+     *
+     * @param string $dtRowIdPrefix
+     */
+    public function setDtRowIdPrefix($dtRowIdPrefix)
+    {
+        $this->dtRowIdPrefix = $dtRowIdPrefix; // This doesn't make difference since its the client side who really decides about the prefix
+        $this->addCustomVar(self::CUSTOM_VAR_ROW_ID_PREFIX, $dtRowIdPrefix); // This will make the things happen, it will add a custom var to be treated in the front-end side
     }
 }
