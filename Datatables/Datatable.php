@@ -685,9 +685,12 @@ class Datatable
         if (!empty($this->callbacks['WhereCollection'])) {
             foreach ($this->callbacks['WhereCollection'] as $callback) {
                 $whereCollection = $callback($qb->expr());
-                if (!is_array($whereCollection))
+                if (!is_array($whereCollection)) {
                     throw new \Exception(sprintf("The function %s must return an array", $callback));
+                }
 
+                if (sizeof($whereCollection) == 0) continue;
+                
                 $qb->andWhere($qb->expr()->andX()->addMultiple($whereCollection));
             }
         }
@@ -964,8 +967,11 @@ class Datatable
         if (!empty($this->callbacks['WhereCollection']) && $this->hideFilteredCount)  {
             foreach ($this->callbacks['WhereCollection'] as $callback) {
                 $whereCollection = $callback($qb->expr());
-                if (!is_array($whereCollection))
+                if (!is_array($whereCollection)) {
                     throw new \Exception(sprintf("The function %s must return an array", $callback));
+                }
+
+                if (sizeof($whereCollection) == 0) continue;
 
                 $qb->andWhere($qb->expr()->andX()->addMultiple($whereCollection));
             }
