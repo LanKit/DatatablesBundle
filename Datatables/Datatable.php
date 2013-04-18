@@ -735,8 +735,8 @@ class Datatable
      */
     public function getCountAllResults()
     {
-        $qb = $this->repository->createQueryBuilder($this->tableName)
-            ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
+        $qb = clone $this->qb;
+        $qb->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
 
         if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount)  {
             foreach ($this->callbacks['WhereBuilder'] as $callback) {
@@ -752,7 +752,7 @@ class Datatable
      */
     public function getCountFilteredResults()
     {
-        $qb = $this->repository->createQueryBuilder($this->tableName);
+        $qb = clone $this->qb;
         $qb->select('count(distinct ' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
         $this->setAssociations($qb);
         $this->setWhere($qb);
