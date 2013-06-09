@@ -1,7 +1,7 @@
 {
     "name": "lankit/datatables-bundle",
     "description": "DataTables.js server-side processing for Doctrine Entities",
-    "keywords": ["LanKitDatatables","LanKit"],
+    "keywords": ["LanKitDatatables","LanKit","DataTables"],
     "type": "symfony-bundle",
     "license": "MIT",
     "authors": [
@@ -11,9 +11,8 @@
         }
     ],
     "require": {
-        "php": ">=5.3.3",
-        "symfony/framework-bundle": ">=2.0,<2.3-dev",
-        "doctrine/orm": ">=2.2.3,<2.4-dev",
+        "symfony/framework-bundle": "~2.0",
+        "doctrine/orm": "~2.0",
         "doctrine/doctrine-bundle": "~1.0"
     },
     "suggest": {
@@ -22,6 +21,5 @@
     "autoload": {
         "psr-0": { "LanKit\\DatatablesBundle": "" }
     },
-    "minimum-stability": "dev",
     "target-dir": "LanKit/DatatablesBundle"
 }
