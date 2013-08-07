@@ -737,6 +737,7 @@ class Datatable
     {
         $qb = $this->repository->createQueryBuilder($this->tableName)
             ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
+        $this->setAssociations($qb);
 
         if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount)  {
             foreach ($this->callbacks['WhereBuilder'] as $callback) {
