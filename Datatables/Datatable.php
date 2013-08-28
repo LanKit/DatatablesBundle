@@ -680,13 +680,14 @@ class Datatable
         return $this;
     }
 
-    /**
+  /**
      * Creates and executes the DataTables search, returns data in the requested format
      *
-     * @param string The result type to use, should be one of: RESULT_JSON, RESULT_ARRAY, RESULT_RESPONSE
+     * @param $resultType string The result type to use, should be one of: RESULT_JSON, RESULT_ARRAY, RESULT_RESPONSE
+     * @param $callback function A callback function to allow the client to manipulate the row data in php
      * @return mixed The DataTables data in the requested/default format
      */
-    public function getSearchResults($resultType = '')
+    public function getSearchResults($resultType = '', $callback=null)
     {
         if (empty($resultType) || !defined('self::RESULT_' . strtoupper($resultType))) {
             $resultType = $this->defaultResultType;
@@ -698,9 +699,15 @@ class Datatable
         $this->makeSearch();
         $this->executeSearch();
 
+
+
+        if (is_callable($callback)){
+            $this->datatable['aaData'] = $callback($this->datatable['aaData']);
+        }
+
         return call_user_func(array(
-            $this, 'getSearchResults' . $resultType
-        ));
+                                   $this, 'getSearchResults' . $resultType
+                              ));
     }
 
     /**
