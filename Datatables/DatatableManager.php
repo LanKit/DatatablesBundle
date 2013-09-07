@@ -21,6 +21,11 @@ class DatatableManager
      * @var boolean Whether or not to use the Doctrine Paginator utility by default
      */
     protected $useDoctrinePaginator;
+	
+	/**
+	* the entity manager
+	**/
+	protected $manager;
 
     public function __construct(DoctrineRegistry $doctrine, ContainerInterface $container, $useDoctrinePaginator)
     {
@@ -48,18 +53,19 @@ class DatatableManager
      * @param string An entity class name or alias 
      * @return object Get a DataTable instance for the given entity
      */
-    public function getDatatable($class)
+    public function getDatatable($class, $manager = "default")
     {
+	    $this->manager = $manager;
         $class = $this->getClassName($class);
 
-        $metadata = $this->doctrine->getManager()->getClassMetadata($class);
-        $repository = $this->doctrine->getRepository($class);
+        $metadata = $this->doctrine->getManager($this->manager)->getClassMetadata($class);
+        $repository = $this->doctrine->getManager($this->manager)->getRepository($class);
 
         $datatable = new Datatable(
             $this->container->get('request')->query->all(),
             $this->doctrine->getRepository($class),
-            $this->doctrine->getManager()->getClassMetadata($class),
-            $this->doctrine->getManager(),
+            $this->doctrine->getManager($this->manager)->getClassMetadata($class),
+            $this->doctrine->getManager($this->manager),
             $this->container->get('lankit_datatables.serializer')
         );
         return $datatable->useDoctrinePaginator($this->useDoctrinePaginator); 
