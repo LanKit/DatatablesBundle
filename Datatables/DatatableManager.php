@@ -22,10 +22,10 @@ class DatatableManager
      */
     protected $useDoctrinePaginator;
 	
-	/**
-	* the entity manager
-	**/
-	protected $manager;
+    /**
+    *  the entity manager
+    **/
+    protected $manager;
 
     public function __construct(DoctrineRegistry $doctrine, ContainerInterface $container, $useDoctrinePaginator)
     {
@@ -43,7 +43,7 @@ class DatatableManager
     protected function getClassName($className) {
         if (strpos($className, ':') !== false) {
            list($namespaceAlias, $simpleClassName) = explode(':', $className);
-           $className = $this->doctrine->getManager()->getConfiguration()
+           $className = $this->doctrine->getManager($this->manager)->getConfiguration()
                ->getEntityNamespace($namespaceAlias) . '\\' . $simpleClassName;
         }
         return $className;
@@ -63,7 +63,7 @@ class DatatableManager
 
         $datatable = new Datatable(
             $this->container->get('request')->query->all(),
-            $this->doctrine->getRepository($class),
+            $this->doctrine->getManager($this->manager)->getRepository($class),
             $this->doctrine->getManager($this->manager)->getClassMetadata($class),
             $this->doctrine->getManager($this->manager),
             $this->container->get('lankit_datatables.serializer')
