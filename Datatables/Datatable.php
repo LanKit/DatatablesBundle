@@ -313,7 +313,7 @@ class Datatable
                 $metadata = $this->em->getClassMetadata(
                     $metadata->getAssociationTargetClass($entityName)
                 );
-                $joinName .= '_' . $this->getJoinName(
+                $joinName .= $field.'_' . $this->getJoinName(
                     $metadata,
                     Container::camelize($metadata->getTableName()),
                     $entityName
