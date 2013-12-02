@@ -78,6 +78,11 @@ class Datatable
      * @var boolean Whether to hide the filtered count if using pre-filter callbacks
      */
     protected $hideFilteredCount = true;
+    
+    /**
+     * @var boolean Whether to use case-insensitive search
+     */
+    protected $caseInsensitiveSearch = false;
 
     /**
      * @var string Whether or not to add DT_RowId to each record
@@ -313,7 +318,7 @@ class Datatable
                 $metadata = $this->em->getClassMetadata(
                     $metadata->getAssociationTargetClass($entityName)
                 );
-                $joinName .= '_' . $this->getJoinName(
+                $joinName .= $field.'_' . $this->getJoinName(
                     $metadata,
                     Container::camelize($metadata->getTableName()),
                     $entityName
@@ -435,6 +440,16 @@ class Datatable
 
         return $this;
     }
+    
+    /**
+     * @param boolean Wheter to use case-insensitive search (Depends on database support)
+     */
+     public function caseInsensitiveSearch($caseInsensitiveSearch) 
+     {
+         $this->caseInsensitiveSearch = (bool) $caseInsensitiveSearch;
+         
+         return $this;
+     }
 
     /**
      * Set the scope of the result set
@@ -479,12 +494,18 @@ class Datatable
             $orExpr = $qb->expr()->orX();
             for ($i=0 ; $i < count($this->parameters); $i++) {
                 if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true") {
+                    $field = $this->associations[$i]['fullName'];
+                    $value = $this->request['sSearch'];
+                    if ($this->caseInsensitiveSearch) {
+                        $field = "LOWER({$field})";
+                        $value = mb_convert_case($value, MB_CASE_LOWER);
+                    }
                     $qbParam = "sSearch_global_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
                     $orExpr->add($qb->expr()->like(
-                        $this->associations[$i]['fullName'],
+                        $field,
                         ":$qbParam"
                     ));
-                    $qb->setParameter($qbParam, "%" . $this->request['sSearch'] . "%");
+                    $qb->setParameter($qbParam, "%" . $value . "%");
                 }
             }
             $qb->where($orExpr);
@@ -495,11 +516,17 @@ class Datatable
         for ($i=0 ; $i < count($this->parameters); $i++) {
             if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && $this->request['sSearch_'.$i] != '') {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
+                $field = $this->associations[$i]['fullName'];
+                $value = $this->request['sSearch_'.$i];
+                if ($this->caseInsensitiveSearch) {
+                    $field = "LOWER({$field})";
+                    $value = mb_convert_case($value, MB_CASE_LOWER);
+                }
                 $andExpr->add($qb->expr()->like(
-                    $this->associations[$i]['fullName'],
+                    $field,
                     ":$qbParam"
                 ));
-                $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+                $qb->setParameter($qbParam, "%" . $value . "%");
             }
         }
         if ($andExpr->count() > 0) {
