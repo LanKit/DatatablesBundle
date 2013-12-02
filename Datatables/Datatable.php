@@ -446,7 +446,7 @@ class Datatable
      */
      public function caseInsensitiveSearch($caseInsensitiveSearch) 
      {
-         $this->caseInsensitiveSearch = bool $caseInsensitiveSearch;
+         $this->caseInsensitiveSearch = (bool) $caseInsensitiveSearch;
          
          return $this;
      }
