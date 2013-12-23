@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Recognizes mData sent from DataTables where dotted notations represent a related
  * entity. For example, defining the following in DataTables...
@@ -30,13 +31,13 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
-
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\HttpFoundation\Response;
 
 class Datatable
 {
+
     /**
      * Doctrine innerJoin type
      */
@@ -207,7 +208,7 @@ class Datatable
         $this->setParameters();
         $this->qb = $em->createQueryBuilder();
         $this->echo = $this->request['sEcho'];
-        $this->search = $this->request['sSearch'];
+        $this->search = isset($this->request['sSearch']) ? : '';
         $this->offset = $this->request['iDisplayStart'];
         $this->amount = $this->request['iDisplayLength'];
 
@@ -271,7 +272,7 @@ class Datatable
         if (is_numeric($this->request['iColumns'])) {
             $params = array();
             $associations = array();
-            for ($i=0; $i < intval($this->request['iColumns']); $i++) {
+            for ($i = 0; $i < intval($this->request['iColumns']); $i++) {
                 $fields = explode('.', $this->request['mDataProp_' . $i]);
                 $params[] = $this->request['mDataProp_' . $i];
                 $associations[] = array('containsCollections' => false);
@@ -293,7 +294,8 @@ class Datatable
      * @param array Association information for a column (by reference)
      * @param array The column fields from dotted notation
      */
-    protected function setRelatedEntityColumnInfo(array &$association, array $fields) {
+    protected function setRelatedEntityColumnInfo(array &$association, array $fields)
+    {
         $mdataName = implode('.', $fields);
         $lastField = Container::camelize(array_pop($fields));
         $joinName = $this->tableName;
@@ -311,12 +313,10 @@ class Datatable
                     $association['containsCollections'] = true;
                 }
                 $metadata = $this->em->getClassMetadata(
-                    $metadata->getAssociationTargetClass($entityName)
+                        $metadata->getAssociationTargetClass($entityName)
                 );
                 $joinName .= '_' . $this->getJoinName(
-                    $metadata,
-                    Container::camelize($metadata->getTableName()),
-                    $entityName
+                                $metadata, Container::camelize($metadata->getTableName()), $entityName
                 );
                 // The join required to get to the entity in question
                 if (!isset($this->assignedJoins[$joinName])) {
@@ -324,11 +324,9 @@ class Datatable
                     $this->assignedJoins[$joinName]['mdataColumn'] = $columnName;
                     $this->identifiers[$joinName] = $metadata->getIdentifierFieldNames();
                 }
-            }
-            else {
+            } else {
                 throw new Exception(
-                    "Association  '$entityName' not found ($mdataName)",
-                    '404'
+                "Association  '$entityName' not found ($mdataName)", '404'
                 );
             }
         }
@@ -336,8 +334,7 @@ class Datatable
         // Check the last field on the last related entity of the dotted notation
         if (!$metadata->hasField(lcfirst($lastField))) {
             throw new Exception(
-                "Field '$lastField' on association '$entityName' not found ($mdataName)",
-                '404'
+            "Field '$lastField' on association '$entityName' not found ($mdataName)", '404'
             );
         }
         $association['entityName'] = $entityName;
@@ -352,13 +349,13 @@ class Datatable
      * @param array  The association information as a reference
      * @param string The field name on the main entity
      */
-    protected function setSingleFieldColumnInfo(array &$association, $fieldName) {
+    protected function setSingleFieldColumnInfo(array &$association, $fieldName)
+    {
         $fieldName = Container::camelize($fieldName);
 
         if (!$this->metadata->hasField(lcfirst($fieldName))) {
             throw new Exception(
-                "Field '$fieldName' not found.)",
-                '404'
+            "Field '$fieldName' not found.)", '404'
             );
         }
 
@@ -380,7 +377,7 @@ class Datatable
 
         // If it is self-referencing then we must avoid collisions
         if ($metadata->getName() == $this->metadata->getName()) {
-            $joinName .= "_$entityName";   
+            $joinName .= "_$entityName";
         }
 
         return $joinName;
@@ -457,10 +454,9 @@ class Datatable
     {
         if (isset($this->request['iSortCol_0'])) {
             for ($i = 0; $i < intval($this->request['iSortingCols']); $i++) {
-                if ($this->request['bSortable_'.intval($this->request['iSortCol_'. $i])] == "true") {
+                if ($this->request['bSortable_' . intval($this->request['iSortCol_' . $i])] == "true") {
                     $qb->addOrderBy(
-                        $this->associations[$this->request['iSortCol_'.$i]]['fullName'],
-                        $this->request['sSortDir_'.$i]
+                            $this->associations[$this->request['iSortCol_' . $i]]['fullName'], $this->request['sSortDir_' . $i]
                     );
                 }
             }
@@ -477,12 +473,11 @@ class Datatable
         // Global filtering
         if ($this->search != '') {
             $orExpr = $qb->expr()->orX();
-            for ($i=0 ; $i < count($this->parameters); $i++) {
-                if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true") {
+            for ($i = 0; $i < count($this->parameters); $i++) {
+                if (isset($this->request['bSearchable_' . $i]) && $this->request['bSearchable_' . $i] == "true") {
                     $qbParam = "sSearch_global_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
                     $orExpr->add($qb->expr()->like(
-                        $this->associations[$i]['fullName'],
-                        ":$qbParam"
+                                    $this->associations[$i]['fullName'], ":$qbParam"
                     ));
                     $qb->setParameter($qbParam, "%" . $this->request['sSearch'] . "%");
                 }
@@ -492,14 +487,13 @@ class Datatable
 
         // Individual column filtering
         $andExpr = $qb->expr()->andX();
-        for ($i=0 ; $i < count($this->parameters); $i++) {
-            if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && $this->request['sSearch_'.$i] != '') {
+        for ($i = 0; $i < count($this->parameters); $i++) {
+            if (isset($this->request['bSearchable_' . $i]) && $this->request['bSearchable_' . $i] == "true" && $this->request['sSearch_' . $i] != '') {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
                 $andExpr->add($qb->expr()->like(
-                    $this->associations[$i]['fullName'],
-                    ":$qbParam"
+                                $this->associations[$i]['fullName'], ":$qbParam"
                 ));
-                $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+                $qb->setParameter($qbParam, "%" . $this->request['sSearch_' . $i] . "%");
             }
         }
         if ($andExpr->count() > 0) {
@@ -512,13 +506,14 @@ class Datatable
             }
         }
     }
-	
-	/**
+
+    /**
      * Adds a manual association
      * 
      * @param type $name - the dotted notation like in mData of the field you need adding
      */
-    public function addManualAssociation($name) {
+    public function addManualAssociation($name)
+    {
         $newAssociation = array('containsCollections' => false);
         $fields = explode('.', $name);
         $this->setRelatedEntityColumnInfo($newAssociation, $fields);
@@ -534,7 +529,7 @@ class Datatable
     {
         foreach ($this->assignedJoins as $joinName => $joinInfo) {
             $joinType = isset($this->joinTypes[$joinInfo['mdataColumn']]) ?
-                $this->joinTypes[$joinInfo['mdataColumn']] :  $this->defaultJoinType;
+                    $this->joinTypes[$joinInfo['mdataColumn']] : $this->defaultJoinType;
             call_user_func_array(array($qb, $joinType . 'Join'), array(
                 $joinInfo['joinOn'],
                 $joinName
@@ -588,7 +583,7 @@ class Datatable
      * Method to execute after constructing this object. Configures the object before
      * executing getSearchResults()
      */
-    public function makeSearch() 
+    public function makeSearch()
     {
         $this->setSelect($this->qb);
         $this->setAssociations($this->qb);
@@ -606,8 +601,9 @@ class Datatable
      * @param array An arrray to check
      * @return bool true if associative
      */
-    protected function isAssocArray(array $array) {
-        return (bool)count(array_filter(array_keys($array), 'is_string'));
+    protected function isAssocArray(array $array)
+    {
+        return (bool) count(array_filter(array_keys($array), 'is_string'));
     }
 
     /**
@@ -619,7 +615,7 @@ class Datatable
 
         $query = $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY);
         $items = $this->useDoctrinePaginator ?
-            new Paginator($query, $this->doesQueryContainCollections()) : $query->execute();
+                new Paginator($query, $this->doesQueryContainCollections()) : $query->execute();
 
         foreach ($items as $item) {
             if ($this->useDtRowClass && !is_null($this->dtRowClass)) {
@@ -629,7 +625,7 @@ class Datatable
                 $item['DT_RowId'] = $item[$this->rootEntityIdentifier];
             }
             // Go through each requested column, transforming the array as needed for DataTables
-            for ($i = 0 ; $i < count($this->parameters); $i++) {
+            for ($i = 0; $i < count($this->parameters); $i++) {
                 // Results are already correctly formatted if this is the case...
                 if (!$this->associations[$i]['containsCollections']) {
                     continue;
@@ -702,8 +698,7 @@ class Datatable
     {
         if (empty($resultType) || !defined('self::RESULT_' . strtoupper($resultType))) {
             $resultType = $this->defaultResultType;
-        }
-        else {
+        } else {
             $resultType = constant('self::RESULT_' . strtoupper($resultType));
         }
 
@@ -748,10 +743,10 @@ class Datatable
     public function getCountAllResults()
     {
         $qb = $this->repository->createQueryBuilder($this->tableName)
-            ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
+                ->select('count(' . $this->tableName . '.' . $this->rootEntityIdentifier . ')');
         $this->setAssociations($qb);
 
-        if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount)  {
+        if (!empty($this->callbacks['WhereBuilder']) && $this->hideFilteredCount) {
             foreach ($this->callbacks['WhereBuilder'] as $callback) {
                 $callback($qb);
             }
@@ -759,7 +754,7 @@ class Datatable
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
-    
+
     /**
      * @return int Total query results after searches/filtering
      */
@@ -775,7 +770,8 @@ class Datatable
     /**
      * @param object A callback function to be used at the end of 'setWhere'
      */
-    public function addWhereBuilderCallback($callback) {
+    public function addWhereBuilderCallback($callback)
+    {
         if (!is_callable($callback)) {
             throw new \Exception("The callback argument must be callable.");
         }
@@ -801,11 +797,12 @@ class Datatable
 
     public function getSearch()
     {
-        return  "%" . $this->search . "%";
+        return "%" . $this->search . "%";
     }
 
     public function getQueryBuilder()
     {
-        return  $this->qb;
+        return $this->qb;
     }
+
 }
