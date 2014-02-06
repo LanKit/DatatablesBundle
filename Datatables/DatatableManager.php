@@ -55,11 +55,8 @@ class DatatableManager
      */
     public function getDatatable($class, $manager = "default")
     {
-	    $this->manager = $manager;
+	$this->manager = $manager;
         $class = $this->getClassName($class);
-
-        $metadata = $this->doctrine->getManager($this->manager)->getClassMetadata($class);
-        $repository = $this->doctrine->getManager($this->manager)->getRepository($class);
 
         $datatable = new Datatable(
             $this->container->get('request')->query->all(),
