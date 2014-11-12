@@ -7,3 +7,6 @@ composer.lock
 .*.sw[a-z]
 *.un~
 Session.vim
+/nbproject/private/
+nbproject/project.properties
+nbproject/project.xml
