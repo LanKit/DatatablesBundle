@@ -1,5 +1,6 @@
-Getting Started With LanKitDatatablesBundle
+Getting Started With TejadongDatatablesBundle
 ===========================================
+*¡¡Attention!!, This bundle is a copy adapted to add compatibility with Symfony 3, the real repository belongs to [LanKit/DatatablesBundle](https://github.com/LanKit/DatatablesBundle).*
 
 * [Prerequisites](#prerequisites)
 * [Installation](#installation)
@@ -46,21 +47,21 @@ serializer service in your config file...
 ```yml
 // app/config.yml
 
-lankit_datatables:
+tejadong_datatables:
     services:
         serializer: some_other_serializer # Defaults to jms_serializer.serializer
 ```
 
 ## Installation
 
-### Step 1: Download LanKitDatatablesBundle using composer
+### Step 1: Download TejadongDatatablesBundle using composer
 
-Add LanKitDatatablesBundle to your composer.json:
+Add TejadongDatatablesBundle to your composer.json:
 
 ```js
 {
     "require": {
-        "lankit/datatables-bundle": "*"
+        "tejadong/datatables-bundle": "*"
     }
 }
 ```
@@ -68,7 +69,7 @@ Add LanKitDatatablesBundle to your composer.json:
 Use composer to download the bundle using the following command:
 
 ``` bash
-$ php composer.phar update lankit/datatables-bundle
+$ php composer.phar update tejadong/datatables-bundle
 ```
 
 ### Step 2: Enable the bundle
@@ -83,7 +84,7 @@ public function registerBundles()
 {
     $bundles = array(
         // ...
-        new LanKit\DatatablesBundle\LanKitDatatablesBundle(),
+        new Tejadong\DatatablesBundle\TejadongDatatablesBundle(),
     );
 }
 ```
@@ -96,7 +97,7 @@ To respond to a DataTables.js request from a controller, you can do the followin
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+    $datatable = $this->get('tejadong_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
     return $datatable->getSearchResults();
 }
@@ -108,12 +109,12 @@ By default an entity association is inner joined. This can be changed as a defau
 can be set on a per columm basis:
 
 ``` php
-use LanKit\DatatablesBundle\Datatables\DataTable;
+use Tejadong\DatatablesBundle\Datatables\DataTable;
 ...
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+    $datatable = $this->get('tejadong_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
      // The default type for all joins is inner. Change it to left if desired.
     $datatable->setDefaultJoinType(Datatable::JOIN_LEFT);
@@ -132,12 +133,12 @@ If you need a different format for the response, you can specify the result type
 constants `Datatable::RESULT_ARRAY` and `Datatable::RESULT_JSON`:
 
 ``` php
-use LanKit\DatatablesBundle\Datatables\DataTable;
+use Tejadong\DatatablesBundle\Datatables\DataTable;
 ...
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+    $datatable = $this->get('tejadong_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
     // Get the results as an array
     $datatableArray = $datatable->getSearchResults(Datatable::RESULT_ARRAY);
@@ -156,7 +157,7 @@ is passed the QueryBuilder instance as an argument.
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')->getDatatable('AcmeDemoBundle:Customer');
+    $datatable = $this->get('tejadong_datatables')->getDatatable('AcmeDemoBundle:Customer');
 
     // Add the $datatable variable, or other needed variables, to the callback scope
     $datatable->addWhereBuilderCallback(function($qb) use ($datatable) {
@@ -187,7 +188,7 @@ then you can toggle it with the `hideFilteredCount` method.
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')
+    $datatable = $this->get('tejadong_datatables')
         ->getDatatable('AcmeDemoBundle:Customer')
         ->addWhereBuilderCallback(function($qb) use ($datatable) {
             // ...
@@ -245,7 +246,7 @@ You can toggle and modify these properties with the methods `setDtRowClass`, `us
 
 public function getDatatableAction()
 {
-    $datatable = $this->get('lankit_datatables')
+    $datatable = $this->get('tejadong_datatables')
         ->getDatatable('AcmeDemoBundle:Customer')
         ->setDtRowClass('special-class') // Add whatever class(es) you want. Separate classes with a space.
         ->useDtRowId(true);
@@ -266,7 +267,7 @@ MS SQL. You may receive an error like...
 To get around this you can disable the use of the Paginator by doing the following...
 
 ```yml
-lankit_datatables:
+tejadong_datatables:
     datatable:
         use_doctrine_paginator: false
 ```

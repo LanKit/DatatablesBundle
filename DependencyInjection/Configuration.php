@@ -1,6 +1,6 @@
 <?php
 
-namespace LanKit\DatatablesBundle\DependencyInjection;
+namespace Tejadong\DatatablesBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -18,7 +18,7 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('lankit_datatables');
+        $rootNode = $treeBuilder->root('tejadong_datatables');
 
         $rootNode
             ->children()

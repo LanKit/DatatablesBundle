@@ -22,7 +22,7 @@
  * built off of, see: https://gist.github.com/1638094 
  */
 
-namespace LanKit\DatatablesBundle\Datatables;
+namespace Tejadong\DatatablesBundle\Datatables;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;

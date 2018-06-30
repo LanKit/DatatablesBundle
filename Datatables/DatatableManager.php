@@ -1,6 +1,6 @@
 <?php
 
-namespace LanKit\DatatablesBundle\Datatables;
+namespace Tejadong\DatatablesBundle\Datatables;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Doctrine\Bundle\DoctrineBundle\Registry as DoctrineRegistry;
@@ -65,7 +65,7 @@ class DatatableManager
             $this->doctrine->getRepository($class),
             $this->doctrine->getManager()->getClassMetadata($class),
             $this->doctrine->getManager(),
-            $this->container->get('lankit_datatables.serializer')
+            $this->container->get('tejadong_datatables.serializer')
         );
         return $datatable->useDoctrinePaginator($this->useDoctrinePaginator);
     }

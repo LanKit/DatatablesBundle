@@ -6,8 +6,12 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Chad Sikorra",
+            "name": "Chad Sikorra (author owner)",
             "email": "Chad.Sikorra@gmail.com"
+        },
+        {
+          "name": "Jesus Tejada (author modifier)",
+          "email": "tejadong@gmail.com"
         }
     ],
     "require": {
@@ -21,5 +25,5 @@
     "autoload": {
         "psr-0": { "Tejadong\\DatatablesBundle": "" }
     },
-    "target-dir": "LanKit/DatatablesBundle"
+    "target-dir": "Tejadong/DatatablesBundle"
 }
