@@ -1,7 +1,7 @@
 {
-    "name": "lankit/datatables-bundle",
+    "name": "Tejadong/datatables-bundle",
     "description": "DataTables.js server-side processing for Doctrine Entities",
-    "keywords": ["LanKitDatatables","LanKit","DataTables"],
+    "keywords": ["TejadongDatatables","Tejadong","DataTables"],
     "type": "symfony-bundle",
     "license": "MIT",
     "authors": [
@@ -19,7 +19,7 @@
         "jms/serializer-bundle": "Advanced JSON encoding capabilities, recommended."
     },
     "autoload": {
-        "psr-0": { "LanKit\\DatatablesBundle": "" }
+        "psr-0": { "Tejadong\\DatatablesBundle": "" }
     },
     "target-dir": "LanKit/DatatablesBundle"
 }
