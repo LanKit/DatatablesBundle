@@ -56,20 +56,11 @@ tejadong_datatables:
 
 ### Step 1: Download TejadongDatatablesBundle using composer
 
-Add TejadongDatatablesBundle to your composer.json:
-
-```js
-{
-    "require": {
-        "tejadong/datatables-bundle": "*"
-    }
-}
-```
 
 Use composer to download the bundle using the following command:
 
 ``` bash
-$ php composer.phar update tejadong/datatables-bundle
+$ php composer require tejadong/datatables-bundle
 ```
 
 ### Step 2: Enable the bundle
