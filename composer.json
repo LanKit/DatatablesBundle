@@ -11,7 +11,6 @@
         }
     ],
     "require": {
-        "symfony/finder ": "~2.0",
         "symfony/framework-bundle": "~3.0",
         "doctrine/orm": "~2.4",
         "doctrine/doctrine-bundle": "~1.4"
