@@ -1,5 +1,5 @@
 {
-    "name": "Tejadong/datatables-bundle",
+    "name": "tejadong/datatables-bundle",
     "description": "DataTables.js server-side processing for Doctrine Entities",
     "keywords": ["TejadongDatatables","Tejadong","DataTables"],
     "type": "symfony-bundle",
