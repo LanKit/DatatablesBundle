@@ -9,6 +9,6 @@ class TejadongDatatablesBundle extends Bundle
 {
     public function getContainerExtension()
     {
-        return new TejadongDatatablesBundle();
+        return new TejadongDatatablesExtension();
     }
 }
