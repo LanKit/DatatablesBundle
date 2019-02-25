@@ -202,7 +202,7 @@ class Datatable
         $this->metadata = $metadata;
         $this->serializer = $serializer;
         $this->tableName = Container::camelize($metadata->getTableName());
-        $this->defaultJoinType = self::JOIN_INNER;
+        $this->defaultJoinType = self::JOIN_LEFT;
         $this->defaultResultType = self::RESULT_RESPONSE;
         $this->setParameters();
         $this->qb = $em->createQueryBuilder();
@@ -318,6 +318,8 @@ class Datatable
                     Container::camelize($metadata->getTableName()),
                     $entityName
                 );
+				$joinName .= '_' . $entityName;
+				
                 // The join required to get to the entity in question
                 if (!isset($this->assignedJoins[$joinName])) {
                     $this->assignedJoins[$joinName]['joinOn'] = $joinOn;
