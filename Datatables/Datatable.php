@@ -201,7 +201,7 @@ class Datatable
         $this->repository = $repository;
         $this->metadata = $metadata;
         $this->serializer = $serializer;
-        $this->tableName = Container::camelize($metadata->getTableName());
+        $this->tableName = Container::camelize(explode('\\', $metadata->getName())[count(explode('\\', $metadata->getName()))-1]);
         $this->defaultJoinType = self::JOIN_LEFT;
         $this->defaultResultType = self::RESULT_RESPONSE;
         $this->setParameters();
@@ -296,31 +296,32 @@ class Datatable
     protected function setRelatedEntityColumnInfo(array &$association, array $fields) {
         $mdataName = implode('.', $fields);
         $lastField = Container::camelize(array_pop($fields));
-        $joinName = $this->tableName;
-        $entityName = '';
+		$joinName = $this->tableName;
+		$entityName = '';
         $columnName = '';
 
         // loop through the related entities, checking the associations as we go
         $metadata = $this->metadata;
+
         while ($field = array_shift($fields)) {
             $columnName .= empty($columnName) ? $field : ".$field";
             $entityName = lcfirst(Container::camelize($field));
+
             if ($metadata->hasAssociation($entityName)) {
                 $joinOn = "$joinName.$entityName";
-                if ($metadata->isCollectionValuedAssociation($entityName)) {
+
+                if ($metadata->isCollectionValuedAssociation($entityName))
                     $association['containsCollections'] = true;
-                }
-                $metadata = $this->em->getClassMetadata(
-                    $metadata->getAssociationTargetClass($entityName)
-                );
+
+                $metadata = $this->em->getClassMetadata($metadata->getAssociationTargetClass($entityName));
+
                 $joinName .= '_' . $this->getJoinName(
                     $metadata,
-                    Container::camelize($metadata->getTableName()),
+					Container::camelize(explode('\\', $metadata->getName())[count(explode('\\', $metadata->getName()))-1]),
                     $entityName
                 );
-				$joinName .= '_' . $entityName;
-				
-                // The join required to get to the entity in question
+
+				// The join required to get to the entity in question
                 if (!isset($this->assignedJoins[$joinName])) {
                     $this->assignedJoins[$joinName]['joinOn'] = $joinOn;
                     $this->assignedJoins[$joinName]['mdataColumn'] = $columnName;
@@ -329,7 +330,7 @@ class Datatable
             }
             else {
                 throw new Exception(
-                    "Association  '$entityName' not found ($mdataName)",
+                    "Relación '$entityName' no encontrada ($mdataName)",
                     '404'
                 );
             }
@@ -338,7 +339,7 @@ class Datatable
         // Check the last field on the last related entity of the dotted notation
         if (!$metadata->hasField(lcfirst($lastField))) {
             throw new Exception(
-                "Field '$lastField' on association '$entityName' not found ($mdataName)",
+                "Propiedad '$lastField' en la relación '$entityName' no encontrada ($mdataName)",
                 '404'
             );
         }
@@ -358,15 +359,14 @@ class Datatable
         $fieldName = Container::camelize($fieldName);
 
         if (!$this->metadata->hasField(lcfirst($fieldName))) {
-            throw new Exception(
-                "Field '$fieldName' not found.)",
-                '404'
-            );
-        }
-
-        $association['fieldName'] = $fieldName;
-        $association['entityName'] = $this->tableName;
-        $association['fullName'] = $this->tableName . '.' . lcfirst($fieldName);
+			$association['fieldName'] = $fieldName;
+			$association['entityName'] = null;
+			$association['fullName'] = lcfirst($fieldName);
+        }else{
+			$association['fieldName'] = $fieldName;
+			$association['entityName'] = $this->tableName;
+			$association['fullName'] = $this->tableName . '.' . lcfirst($fieldName);
+		}
     }
 
     /**
@@ -382,7 +382,7 @@ class Datatable
 
         // If it is self-referencing then we must avoid collisions
         if ($metadata->getName() == $this->metadata->getName()) {
-            $joinName .= "_$entityName";   
+            $joinName = "$entityName";
         }
 
         return $joinName;
@@ -551,10 +551,15 @@ class Datatable
         // Combine all columns to pull
         foreach ($this->associations as $column) {
             $parts = explode('.', $column['fullName']);
-            $columns[$parts[0]][] = $parts[1];
-        }
 
-        // Partial column results on entities require that we include the identifier as part of the selection
+			if(count($parts) > 1){
+				$columns[$parts[0]][] = $parts[1];
+			}else{
+				$columns['Custom'][] = $parts[0];
+			}
+		}
+
+		// Partial column results on entities require that we include the identifier as part of the selection
         foreach ($this->identifiers as $joinName => $identifiers) {
             if (!in_array($identifiers[0], $columns[$joinName])) {
                 array_unshift($columns[$joinName], $identifiers[0]);
@@ -567,7 +572,8 @@ class Datatable
         }
 
         foreach ($columns as $columnName => $fields) {
-            $partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
+        	if($columnName != 'Custom')
+        		$partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
         }
 
         $qb->select(implode(',', $partials));
@@ -800,22 +806,22 @@ class Datatable
 
     public function setCustom($response, $nombre, $clase, $funcion, $parameters = []){
 
-        $data = json_decode($response->getContent(), true);
+    	$data = json_decode($response->getContent(), true);
 
-        foreach($data['aaData'] as $key => $registro){
+    	foreach($data['aaData'] as $key => $registro){
 
-            $parametros = [];
+    		$parametros = [];
 
-            if(count($parameters) == 0)
-                $parametros = array($registro['id']);
-            else{
-                $parametros = array_merge(array($registro['id']), $parameters);
-            }
+			if(count($parameters) == 0)
+				$parametros = array($registro['id']);
+			else{
+				$parametros = array_merge(array($registro['id']), $parameters);
+			}
 
-            $data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
-        }
+			$data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
+		}
 
-        return $response->setContent(json_encode($data));
+    	return $response->setContent(json_encode($data));
 
-    }
+	}
 }
