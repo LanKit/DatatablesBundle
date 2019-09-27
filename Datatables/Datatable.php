@@ -797,4 +797,25 @@ class Datatable
     {
         return  $this->qb;
     }
+
+    public function setCustom($response, $nombre, $clase, $funcion, $parameters = []){
+
+        $data = json_decode($response->getContent(), true);
+
+        foreach($data['aaData'] as $key => $registro){
+
+            $parametros = [];
+
+            if(count($parameters) == 0)
+                $parametros = array($registro['id']);
+            else{
+                $parametros = array_merge(array($registro['id']), $parameters);
+            }
+
+            $data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
+        }
+
+        return $response->setContent(json_encode($data));
+
+    }
 }
