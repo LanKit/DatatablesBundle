@@ -638,7 +638,7 @@ class Datatable
                 while ($field = array_shift($fields)) {
                     $rowRef = &$rowRef[$field];
                     // We ran into a collection based entity. Combine, merge, and continue on...
-                    if (!empty($fields) && !$this->isAssocArray($rowRef)) {
+                    if (!empty($fields) && $rowRef !== null && !$this->isAssocArray($rowRef)) {
                         $children = array();
                         while ($childItem = array_shift($rowRef)) {
                             $children = array_merge_recursive($children, $childItem);
