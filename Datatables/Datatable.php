@@ -321,6 +321,8 @@ class Datatable
                     $entityName
                 );
 
+                $joinName .= '_' . $entityName;
+
 				// The join required to get to the entity in question
                 if (!isset($this->assignedJoins[$joinName])) {
                     $this->assignedJoins[$joinName]['joinOn'] = $joinOn;
