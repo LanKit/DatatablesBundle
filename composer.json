@@ -18,7 +18,7 @@
         "symfony/framework-bundle": "~2.0||~3.0",
         "doctrine/orm": "~2.0||~2.4",
         "doctrine/doctrine-bundle": "~1.0||~1.4",
-        "beberlei/doctrineextensions": "^1.2"
+        "beberlei/doctrineextensions": "^1.1"
     },
     "suggest": {
         "jms/serializer-bundle": "Advanced JSON encoding capabilities, recommended."
