@@ -19,7 +19,7 @@
  *     { "mData": "customer.location.address" }
  *
  * Felix-Antoine Paradis is the author of the original implementation this is
- * built off of, see: https://gist.github.com/1638094 
+ * built off of, see: https://gist.github.com/1638094
  */
 
 namespace Tejadong\DatatablesBundle\Datatables;
@@ -484,17 +484,14 @@ class Datatable
             for ($i=0 ; $i < count($this->parameters); $i++) {
                 if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true") {
                     $qbParam = "sSearch_global_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
-                    $fieldType = $this->metadata->getTypeOfField(lcfirst($this->associations[$i]['fieldName']));
 
-                    if ($fieldType === 'datetime' || $fieldType === 'date') {
-                        $orExpr->add(
-                            $qb->expr()->like(
-                                "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
-                                ":$qbParam"
-                            )
-                        );
-                        $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
-                    }
+                    $orExpr->add(
+                        $qb->expr()->like(
+                            "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
+                            ":$qbParam"
+                        )
+                    );
+                    $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
 
                     $orExpr->add($qb->expr()->like(
                         $this->associations[$i]['fullName'],
@@ -512,17 +509,14 @@ class Datatable
         for ($i=0 ; $i < count($this->parameters); $i++) {
             if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && $this->request['sSearch_'.$i] != '') {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
-                $fieldType = $this->metadata->getTypeOfField(lcfirst($this->associations[$i]['fieldName']));
 
-                if ($fieldType === 'datetime' || $fieldType === 'date') {
-                    $orExpr->add(
-                        $qb->expr()->like(
-                            "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
-                            ":$qbParam"
-                        )
-                    );
-                    $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
-                }
+                $orExpr->add(
+                    $qb->expr()->like(
+                        "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
+                        ":$qbParam"
+                    )
+                );
+                $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
 
                 $andExpr->add($qb->expr()->like(
                     $this->associations[$i]['fullName'],
@@ -615,7 +609,7 @@ class Datatable
      * Method to execute after constructing this object. Configures the object before
      * executing getSearchResults()
      */
-    public function makeSearch() 
+    public function makeSearch()
     {
         $this->setSelect($this->qb);
         $this->setAssociations($this->qb);
@@ -785,7 +779,7 @@ class Datatable
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
-    
+
     /**
      * @return int Total query results after searches/filtering
      */
