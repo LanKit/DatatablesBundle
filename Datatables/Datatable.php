@@ -19,10 +19,10 @@
  *     { "mData": "customer.location.address" }
  *
  * Felix-Antoine Paradis is the author of the original implementation this is
- * built off of, see: https://gist.github.com/1638094 
+ * built off of, see: https://gist.github.com/1638094
  */
 
-namespace LanKit\DatatablesBundle\Datatables;
+namespace Tejadong\DatatablesBundle\Datatables;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -201,8 +201,8 @@ class Datatable
         $this->repository = $repository;
         $this->metadata = $metadata;
         $this->serializer = $serializer;
-        $this->tableName = Container::camelize($metadata->getTableName());
-        $this->defaultJoinType = self::JOIN_INNER;
+        $this->tableName = Container::camelize(explode('\\', $metadata->getName())[count(explode('\\', $metadata->getName()))-1]);
+        $this->defaultJoinType = self::JOIN_LEFT;
         $this->defaultResultType = self::RESULT_RESPONSE;
         $this->setParameters();
         $this->qb = $em->createQueryBuilder();
@@ -296,29 +296,34 @@ class Datatable
     protected function setRelatedEntityColumnInfo(array &$association, array $fields) {
         $mdataName = implode('.', $fields);
         $lastField = Container::camelize(array_pop($fields));
-        $joinName = $this->tableName;
-        $entityName = '';
+		$joinName = $this->tableName;
+		$entityName = '';
         $columnName = '';
 
         // loop through the related entities, checking the associations as we go
         $metadata = $this->metadata;
+
         while ($field = array_shift($fields)) {
             $columnName .= empty($columnName) ? $field : ".$field";
             $entityName = lcfirst(Container::camelize($field));
+
             if ($metadata->hasAssociation($entityName)) {
                 $joinOn = "$joinName.$entityName";
-                if ($metadata->isCollectionValuedAssociation($entityName)) {
+
+                if ($metadata->isCollectionValuedAssociation($entityName))
                     $association['containsCollections'] = true;
-                }
-                $metadata = $this->em->getClassMetadata(
-                    $metadata->getAssociationTargetClass($entityName)
-                );
+
+                $metadata = $this->em->getClassMetadata($metadata->getAssociationTargetClass($entityName));
+
                 $joinName .= '_' . $this->getJoinName(
                     $metadata,
-                    Container::camelize($metadata->getTableName()),
+					Container::camelize(explode('\\', $metadata->getName())[count(explode('\\', $metadata->getName()))-1]),
                     $entityName
                 );
-                // The join required to get to the entity in question
+
+                $joinName .= '_' . $entityName;
+
+				// The join required to get to the entity in question
                 if (!isset($this->assignedJoins[$joinName])) {
                     $this->assignedJoins[$joinName]['joinOn'] = $joinOn;
                     $this->assignedJoins[$joinName]['mdataColumn'] = $columnName;
@@ -327,7 +332,7 @@ class Datatable
             }
             else {
                 throw new Exception(
-                    "Association  '$entityName' not found ($mdataName)",
+                    "Relación '$entityName' no encontrada ($mdataName)",
                     '404'
                 );
             }
@@ -336,7 +341,7 @@ class Datatable
         // Check the last field on the last related entity of the dotted notation
         if (!$metadata->hasField(lcfirst($lastField))) {
             throw new Exception(
-                "Field '$lastField' on association '$entityName' not found ($mdataName)",
+                "Propiedad '$lastField' en la relación '$entityName' no encontrada ($mdataName)",
                 '404'
             );
         }
@@ -356,15 +361,14 @@ class Datatable
         $fieldName = Container::camelize($fieldName);
 
         if (!$this->metadata->hasField(lcfirst($fieldName))) {
-            throw new Exception(
-                "Field '$fieldName' not found.)",
-                '404'
-            );
-        }
-
-        $association['fieldName'] = $fieldName;
-        $association['entityName'] = $this->tableName;
-        $association['fullName'] = $this->tableName . '.' . lcfirst($fieldName);
+			$association['fieldName'] = $fieldName;
+			$association['entityName'] = null;
+			$association['fullName'] = lcfirst($fieldName);
+        }else{
+			$association['fieldName'] = $fieldName;
+			$association['entityName'] = $this->tableName;
+			$association['fullName'] = $this->tableName . '.' . lcfirst($fieldName);
+		}
     }
 
     /**
@@ -380,7 +384,7 @@ class Datatable
 
         // If it is self-referencing then we must avoid collisions
         if ($metadata->getName() == $this->metadata->getName()) {
-            $joinName .= "_$entityName";   
+            $joinName = "$entityName";
         }
 
         return $joinName;
@@ -480,6 +484,15 @@ class Datatable
             for ($i=0 ; $i < count($this->parameters); $i++) {
                 if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true") {
                     $qbParam = "sSearch_global_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
+
+                    $orExpr->add(
+                        $qb->expr()->like(
+                            "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
+                            ":$qbParam"
+                        )
+                    );
+                    $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+
                     $orExpr->add($qb->expr()->like(
                         $this->associations[$i]['fullName'],
                         ":$qbParam"
@@ -492,9 +505,19 @@ class Datatable
 
         // Individual column filtering
         $andExpr = $qb->expr()->andX();
+        $orExpr = $qb->expr()->orX();
         for ($i=0 ; $i < count($this->parameters); $i++) {
             if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && $this->request['sSearch_'.$i] != '') {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
+
+                $orExpr->add(
+                    $qb->expr()->like(
+                        "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
+                        ":$qbParam"
+                    )
+                );
+                $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+
                 $andExpr->add($qb->expr()->like(
                     $this->associations[$i]['fullName'],
                     ":$qbParam"
@@ -504,6 +527,10 @@ class Datatable
         }
         if ($andExpr->count() > 0) {
             $qb->andWhere($andExpr);
+        }
+
+        if ($orExpr->count() > 0) {
+            $qb->orWhere($orExpr);
         }
 
         if (!empty($this->callbacks['WhereBuilder'])) {
@@ -549,10 +576,15 @@ class Datatable
         // Combine all columns to pull
         foreach ($this->associations as $column) {
             $parts = explode('.', $column['fullName']);
-            $columns[$parts[0]][] = $parts[1];
-        }
 
-        // Partial column results on entities require that we include the identifier as part of the selection
+			if(count($parts) > 1){
+				$columns[$parts[0]][] = $parts[1];
+			}else{
+				$columns['Custom'][] = $parts[0];
+			}
+		}
+
+		// Partial column results on entities require that we include the identifier as part of the selection
         foreach ($this->identifiers as $joinName => $identifiers) {
             if (!in_array($identifiers[0], $columns[$joinName])) {
                 array_unshift($columns[$joinName], $identifiers[0]);
@@ -565,7 +597,8 @@ class Datatable
         }
 
         foreach ($columns as $columnName => $fields) {
-            $partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
+        	if($columnName != 'Custom')
+        		$partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
         }
 
         $qb->select(implode(',', $partials));
@@ -576,7 +609,7 @@ class Datatable
      * Method to execute after constructing this object. Configures the object before
      * executing getSearchResults()
      */
-    public function makeSearch() 
+    public function makeSearch()
     {
         $this->setSelect($this->qb);
         $this->setAssociations($this->qb);
@@ -630,7 +663,7 @@ class Datatable
                 while ($field = array_shift($fields)) {
                     $rowRef = &$rowRef[$field];
                     // We ran into a collection based entity. Combine, merge, and continue on...
-                    if (!empty($fields) && !$this->isAssocArray($rowRef)) {
+                    if (!empty($fields) && $rowRef !== null && !$this->isAssocArray($rowRef)) {
                         $children = array();
                         while ($childItem = array_shift($rowRef)) {
                             $children = array_merge_recursive($children, $childItem);
@@ -746,7 +779,7 @@ class Datatable
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
-    
+
     /**
      * @return int Total query results after searches/filtering
      */
@@ -795,4 +828,25 @@ class Datatable
     {
         return  $this->qb;
     }
+
+    public function setCustom($response, $nombre, $clase, $funcion, $parameters = []){
+
+    	$data = json_decode($response->getContent(), true);
+
+    	foreach($data['aaData'] as $key => $registro){
+
+    		$parametros = [];
+
+			if(count($parameters) == 0)
+				$parametros = array($registro['id']);
+			else{
+				$parametros = array_merge(array($registro['id']), $parameters);
+			}
+
+			$data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
+		}
+
+    	return $response->setContent(json_encode($data));
+
+	}
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace LanKit\DatatablesBundle\DependencyInjection;
+namespace Tejadong\DatatablesBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Config\FileLocator;
@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\Loader;
  *
  * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
  */
-class LanKitDatatablesExtension extends Extension
+class TejadongDatatablesExtension extends Extension
 {
     /**
      * {@inheritDoc}
@@ -29,7 +29,7 @@ class LanKitDatatablesExtension extends Extension
             $container->setAlias($this->getAlias() . '.' . $key, $service);
         }
 
-        $container->getDefinition('lankit_datatables')
+        $container->getDefinition('tejadong_datatables')
             ->replaceArgument(2, $config['datatable']['use_doctrine_paginator']);
     }
 
@@ -38,6 +38,6 @@ class LanKitDatatablesExtension extends Extension
      */
     public function getAlias()
     {
-        return 'lankit_datatables';
+        return 'tejadong_datatables';
     }
 }
