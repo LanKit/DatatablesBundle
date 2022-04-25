@@ -296,8 +296,8 @@ class Datatable
     protected function setRelatedEntityColumnInfo(array &$association, array $fields) {
         $mdataName = implode('.', $fields);
         $lastField = Container::camelize(array_pop($fields));
-		$joinName = $this->tableName;
-		$entityName = '';
+        $joinName = $this->tableName;
+        $entityName = '';
         $columnName = '';
 
         // loop through the related entities, checking the associations as we go
@@ -484,17 +484,25 @@ class Datatable
             for ($i=0 ; $i < count($this->parameters); $i++) {
                 if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true") {
                     $qbParam = "sSearch_global_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
+                    $fieldType = $this->metadata->getTypeOfField(lcfirst($this->associations[$i]['fieldName']));
 
-                    $orExpr->add(
-                        $qb->expr()->like(
-                            "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
-                            ":$qbParam"
-                        )
-                    );
-                    $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+                    switch ($fieldType) {
+                        case "datetime":
+                            $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')";
+                            break;
+                        case "time":
+                            $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%H:%i:%s')";
+                            break;
+                        case "date":
+                            $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y')";
+                            break;
+                        default:
+                            $fieldName = $this->associations[$i]['fullName'];
+                            break;
+                    }
 
                     $orExpr->add($qb->expr()->like(
-                        $this->associations[$i]['fullName'],
+                        $fieldName,
                         ":$qbParam"
                     ));
                     $qb->setParameter($qbParam, "%" . $this->request['sSearch'] . "%");
@@ -505,32 +513,36 @@ class Datatable
 
         // Individual column filtering
         $andExpr = $qb->expr()->andX();
-        $orExpr = $qb->expr()->orX();
         for ($i=0 ; $i < count($this->parameters); $i++) {
             if (isset($this->request['bSearchable_'.$i]) && $this->request['bSearchable_'.$i] == "true" && $this->request['sSearch_'.$i] != '') {
                 $qbParam = "sSearch_single_{$this->associations[$i]['entityName']}_{$this->associations[$i]['fieldName']}";
+                $fieldType = $this->metadata->getTypeOfField(lcfirst($this->associations[$i]['fieldName']));
 
-                $orExpr->add(
-                    $qb->expr()->like(
-                        "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')",
-                        ":$qbParam"
-                    )
-                );
-                $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
+                switch ($fieldType) {
+                    case "datetime":
+                        $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y %H:%i:%s')";
+                        break;
+                    case "time":
+                        $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%H:%i:%s')";
+                        break;
+                    case "date":
+                        $fieldName = "DATE_FORMAT(".$this->associations[$i]['fullName'].", '%d/%m/%Y')";
+                        break;
+                    default:
+                        $fieldName = $this->associations[$i]['fullName'];
+                        break;
+                }
 
                 $andExpr->add($qb->expr()->like(
-                    $this->associations[$i]['fullName'],
-                    ":$qbParam"
-                ));
+                    $fieldName,
+                    ":$qbParam")
+                );
                 $qb->setParameter($qbParam, "%" . $this->request['sSearch_'.$i] . "%");
             }
         }
+
         if ($andExpr->count() > 0) {
             $qb->andWhere($andExpr);
-        }
-
-        if ($orExpr->count() > 0) {
-            $qb->orWhere($orExpr);
         }
 
         if (!empty($this->callbacks['WhereBuilder'])) {
@@ -577,14 +589,14 @@ class Datatable
         foreach ($this->associations as $column) {
             $parts = explode('.', $column['fullName']);
 
-			if(count($parts) > 1){
-				$columns[$parts[0]][] = $parts[1];
-			}else{
-				$columns['Custom'][] = $parts[0];
-			}
-		}
+            if(count($parts) > 1){
+                $columns[$parts[0]][] = $parts[1];
+            }else{
+                $columns['Custom'][] = $parts[0];
+            }
+        }
 
-		// Partial column results on entities require that we include the identifier as part of the selection
+        // Partial column results on entities require that we include the identifier as part of the selection
         foreach ($this->identifiers as $joinName => $identifiers) {
             if (!in_array($identifiers[0], $columns[$joinName])) {
                 array_unshift($columns[$joinName], $identifiers[0]);
@@ -597,8 +609,8 @@ class Datatable
         }
 
         foreach ($columns as $columnName => $fields) {
-        	if($columnName != 'Custom')
-        		$partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
+            if($columnName != 'Custom')
+                $partials[] = 'partial ' . $columnName . '.{' . implode(',', $fields) . '}';
         }
 
         $qb->select(implode(',', $partials));
@@ -831,22 +843,22 @@ class Datatable
 
     public function setCustom($response, $nombre, $clase, $funcion, $parameters = []){
 
-    	$data = json_decode($response->getContent(), true);
+        $data = json_decode($response->getContent(), true);
 
-    	foreach($data['aaData'] as $key => $registro){
+        foreach($data['aaData'] as $key => $registro){
 
-    		$parametros = [];
+            $parametros = [];
 
-			if(count($parameters) == 0)
-				$parametros = array($registro['id']);
-			else{
-				$parametros = array_merge(array($registro['id']), $parameters);
-			}
+            if(count($parameters) == 0)
+                $parametros = array($registro['id']);
+            else{
+                $parametros = array_merge(array($registro['id']), $parameters);
+            }
 
-			$data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
-		}
+            $data['aaData'][$key][$nombre] = call_user_func_array( array( $clase, $funcion), $parametros );
+        }
 
-    	return $response->setContent(json_encode($data));
+        return $response->setContent(json_encode($data));
 
-	}
+    }
 }
